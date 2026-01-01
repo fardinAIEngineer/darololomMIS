@@ -6,11 +6,9 @@ from django.contrib import messages
 from django.http import FileResponse, Http404
 from django.conf import settings
 import os
-
 from .models import Student, SchoolClass, Subject, Teacher
 from .forms import StudentForm, SchoolClassForm, SubjectForm, TeacherForm
 from .models import StudentScore
-from .forms import StudentScoreForm
 import json
 from django.utils.safestring import mark_safe
 
