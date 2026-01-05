@@ -431,7 +431,7 @@
               box-sizing: border-box;
             }
             @page {
-              size: 540px 340px;
+              size: 440px 620px;
               margin: 0;
             }
             @media print {
@@ -440,8 +440,8 @@
                 padding: 0 !important;
               }
               #printCard {
-                width: 540px !important;
-                height: 340px !important;
+                width: 440px !important;
+                height: 620px !important;
                 margin: 0 !important;
                 padding: 0 !important;
                 page-break-after: avoid;
@@ -457,8 +457,8 @@
               padding: 20px;
             }
             #printCard {
-              width: 540px;
-              height: 340px;
+              width: 440px;
+              height: 620px;
             }
           <\/style>
         </head>
@@ -479,22 +479,22 @@
       const element = document.getElementById('idCardContent');
       
       try {
-        // Use html2canvas directly first
+        // Use html2canvas to capture the card exactly as displayed
         const canvas = await html2canvas(element, {
           scale: 2,
           useCORS: true,
           allowTaint: true,
-          backgroundColor: null,
-          logging: true,
-          width: 540,
-          height: 340
+          backgroundColor: '#ffffff',
+          logging: false,
+          width: 440,
+          height: 620
         });
         
         // Check if canvas has content
         console.log('Canvas created:', canvas.width, 'x', canvas.height);
         
         // Create PDF from canvas
-        const imgData = canvas.toDataURL('image/jpeg', 0.95);
+        const imgData = canvas.toDataURL('image/jpeg', 1.0);
         
         // Import jsPDF from window
         const { jsPDF } = window.jspdf || window;
@@ -504,12 +504,12 @@
         }
         
         const pdf = new jsPDF({
-          orientation: 'landscape',
+          orientation: 'portrait',
           unit: 'px',
-          format: [540, 340]
+          format: [440, 620]
         });
         
-        pdf.addImage(imgData, 'JPEG', 0, 0, 540, 340);
+        pdf.addImage(imgData, 'JPEG', 0, 0, 440, 620);
         pdf.save('student-id-card.pdf');
         
       } catch (error) {
