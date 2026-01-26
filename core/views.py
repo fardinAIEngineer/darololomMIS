@@ -547,3 +547,72 @@ def api_class_search(request):
 			'more': end < total_count
 		}
 	})
+
+
+def student_exam_results(request, pk):
+	"""Display the latest exam results for a student in a printable format."""
+	from django.db.models import Max
+	from datetime import datetime
+	
+	student = get_object_or_404(Student, pk=pk)
+	
+	# Get the latest semester for this student
+	# First try from student's assigned semesters
+	latest_semester = None
+	if student.semesters.exists():
+		latest_semester = student.semesters.order_by('-number').first()
+	# Fallback to class semester
+	elif student.school_class and student.school_class.semester:
+		latest_semester = student.school_class.semester
+	
+	# Get all scores for subjects in the latest semester
+	scores = []
+	total_score = 0
+	max_possible = 0
+	subjects_count = 0
+	
+	if latest_semester:
+		# Get subjects for this semester
+		subjects = Subject.objects.filter(semester=latest_semester.number).order_by('name')
+		
+		for subject in subjects:
+			# Try to get the score for this student and subject
+			try:
+				student_score = StudentScore.objects.get(student=student, subject=subject)
+				score_value = student_score.score if student_score.score is not None else 0
+			except StudentScore.DoesNotExist:
+				score_value = 0
+			
+			scores.append({
+				'subject_name': subject.name,
+				'score': score_value,
+				'status': 'کامیاب' if score_value >= 55 else 'مردود' if score_value > 0 else '-'
+			})
+			
+			if score_value > 0:
+				total_score += score_value
+				max_possible += 100
+				subjects_count += 1
+	
+	# Calculate percentage and average
+	percentage = (total_score / max_possible * 100) if max_possible > 0 else 0
+	average = (total_score / subjects_count) if subjects_count > 0 else 0
+	overall_status = 'کامیاب' if average >= 55 and subjects_count > 0 else 'مردود' if subjects_count > 0 else 'نامشخص'
+	
+	# Get current date for report
+	current_date = datetime.now().strftime('%Y-%m-%d')
+	
+	context = {
+		'student': student,
+		'semester': latest_semester,
+		'scores': scores,
+		'total_score': total_score,
+		'max_possible': max_possible,
+		'percentage': round(percentage, 2),
+		'average': round(average, 2),
+		'overall_status': overall_status,
+		'subjects_count': subjects_count,
+		'current_date': current_date,
+	}
+	
+	return render(request, 'core/student_exam_results.html', context)
