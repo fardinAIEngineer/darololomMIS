@@ -15,9 +15,8 @@ const registerSchema = z.object({
   password: z.string().min(8, 'رمز عبور باید حداقل ۸ کاراکتر باشد'),
   password_confirm: z.string(),
   name: z.string().min(1, 'نام الزامی است'),
-  father_name: z.string().optional(),
+  father_name: z.string().min(1, 'نام پدر الزامی است'),
   gender: z.enum(['male', 'female']),
-  phone_number: z.string().optional(),
 }).refine((data) => data.password === data.password_confirm, {
   message: "رمز عبور و تایید آن مطابقت ندارند",
   path: ['password_confirm'],
@@ -74,16 +73,16 @@ export const Register: React.FC = () => {
           </div>
 
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <Input
-                label={t('students.email')}
-                type="email"
-                {...register('email')}
-                error={errors.email?.message}
-                placeholder="example@email.com"
-                required
-              />
+            <Input
+              label={t('students.email')}
+              type="email"
+              {...register('email')}
+              error={errors.email?.message}
+              placeholder="example@email.com"
+              required
+            />
 
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <Input
                 label={t('students.name')}
                 {...register('name')}
@@ -97,23 +96,19 @@ export const Register: React.FC = () => {
                 {...register('father_name')}
                 error={errors.father_name?.message}
                 placeholder={t('students.fatherName')}
-              />
-
-              <Select
-                label={t('students.gender')}
-                {...register('gender')}
-                error={errors.gender?.message}
-                options={genderOptions}
                 required
               />
+            </div>
 
-              <Input
-                label={t('students.phoneNumber')}
-                {...register('phone_number')}
-                error={errors.phone_number?.message}
-                placeholder="+93 700 123 456"
-              />
+            <Select
+              label={t('students.gender')}
+              {...register('gender')}
+              error={errors.gender?.message}
+              options={genderOptions}
+              required
+            />
 
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <Input
                 label={t('auth.password')}
                 type="password"

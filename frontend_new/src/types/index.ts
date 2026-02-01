@@ -39,9 +39,8 @@ export interface RegisterData {
   password: string;
   password_confirm: string;
   name: string;
-  father_name?: string;
+  father_name: string;
   gender: Gender;
-  phone_number?: string;
 }
 
 export interface AuthResponse {

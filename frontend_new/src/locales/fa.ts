@@ -427,6 +427,9 @@ export const fa = {
     personalInfo: 'اطلاعات شخصی',
     contactInfo: 'اطلاعات تماس',
     accountInfo: 'اطلاعات حساب',
+    completeProfile: 'تکمیل پروفایل',
+    profileIncomplete: 'پروفایل شما ناقص است',
+    pleaseCompleteProfile: 'لطفاً اطلاعات خود را تکمیل کنید',
   },
 
   // Settings

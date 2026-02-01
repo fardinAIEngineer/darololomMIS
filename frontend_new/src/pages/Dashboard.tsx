@@ -1,9 +1,11 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Users, GraduationCap, School, BookOpen, Calendar, CheckCircle } from 'lucide-react';
 import { Card, CardHeader, CardContent } from '@/components/ui';
 import { useAuthStore } from '@/store/authStore';
 import { useTranslation } from '@/hooks/useTranslation';
 import { toPersianNumber } from '@/utils/persianNumbers';
+import { ROUTES } from '@/utils/constants';
 
 const StatCard: React.FC<{
   title: string;
@@ -29,6 +31,7 @@ const StatCard: React.FC<{
 export const Dashboard: React.FC = () => {
   const { user, isSuperAdmin, isAdmin, isStudent } = useAuthStore();
   const { t } = useTranslation();
+  const navigate = useNavigate();
 
   return (
     <div className="space-y-6">
@@ -81,14 +84,20 @@ export const Dashboard: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {!isStudent() && (
               <>
-                <button className="p-4 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg hover:border-primary-500 dark:hover:border-primary-400 transition-colors text-right">
+                <button 
+                  onClick={() => navigate(ROUTES.ATTENDANCE_STUDENTS)}
+                  className="p-4 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg hover:border-primary-500 dark:hover:border-primary-400 transition-colors text-right"
+                >
                   <Calendar className="h-6 w-6 text-primary-600 mb-2" />
                   <p className="font-medium">{t('dashboard.markAttendance')}</p>
                   <p className="text-sm text-gray-500 dark:text-gray-400">
                     {t('attendance.markAttendance')}
                   </p>
                 </button>
-                <button className="p-4 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg hover:border-primary-500 dark:hover:border-primary-400 transition-colors text-right">
+                <button 
+                  onClick={() => navigate(ROUTES.GRADE_ENTRY)}
+                  className="p-4 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg hover:border-primary-500 dark:hover:border-primary-400 transition-colors text-right"
+                >
                   <CheckCircle className="h-6 w-6 text-primary-600 mb-2" />
                   <p className="font-medium">{t('dashboard.enterGrades')}</p>
                   <p className="text-sm text-gray-500 dark:text-gray-400">
@@ -98,7 +107,10 @@ export const Dashboard: React.FC = () => {
               </>
             )}
             {(isSuperAdmin() || isAdmin()) && (
-              <button className="p-4 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg hover:border-primary-500 dark:hover:border-primary-400 transition-colors text-right">
+              <button 
+                onClick={() => navigate(ROUTES.PENDING_APPROVALS)}
+                className="p-4 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg hover:border-primary-500 dark:hover:border-primary-400 transition-colors text-right"
+              >
                 <Users className="h-6 w-6 text-primary-600 mb-2" />
                 <p className="font-medium">{t('dashboard.pendingApprovals')}</p>
                 <p className="text-sm text-gray-500 dark:text-gray-400">

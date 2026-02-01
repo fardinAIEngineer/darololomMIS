@@ -27,8 +27,9 @@ export const userService = {
   },
 
   getPendingStudents: async (): Promise<User[]> => {
-    const response = await api.get<User[]>('/api/auth/users/pending-students/');
-    return response.data;
+    const response = await api.get<PaginatedResponse<User>>('/api/auth/users/pending-students/');
+    // Handle both paginated and non-paginated responses
+    return Array.isArray(response.data) ? response.data : response.data.results || [];
   },
 
   approveRejectUser: async (

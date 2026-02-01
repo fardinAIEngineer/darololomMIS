@@ -7,6 +7,7 @@ import { MainLayout } from './layouts/MainLayout';
 import { Login } from './pages/Login';
 import { Register } from './pages/Register';
 import { Dashboard } from './pages/Dashboard';
+import { PendingApprovals } from './pages/PendingApprovals';
 import { ROUTES } from './utils/constants';
 
 const queryClient = new QueryClient({
@@ -40,7 +41,8 @@ function App() {
             }
           >
             <Route index element={<Navigate to={ROUTES.DASHBOARD} />} />
-            <Route path={ROUTES.DASHBOARD} element={<Dashboard />} />
+            <Route path="dashboard" element={<Dashboard />} />
+            <Route path="users/pending" element={<PendingApprovals />} />
             {/* Add more routes here */}
           </Route>
         </Routes>

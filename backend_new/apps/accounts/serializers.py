@@ -67,6 +67,7 @@ class UserCreateSerializer(serializers.ModelSerializer):
 class StudentRegistrationSerializer(serializers.ModelSerializer):
     """
     Serializer specifically for student self-registration
+    Only essential fields required for initial registration
     """
     password = serializers.CharField(write_only=True, min_length=8)
     password_confirm = serializers.CharField(write_only=True, min_length=8)
@@ -74,8 +75,8 @@ class StudentRegistrationSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = [
-            'email', 'password', 'password_confirm', 'phone_number',
-            'name', 'father_name', 'gender', 'profile_image'
+            'email', 'password', 'password_confirm',
+            'name', 'father_name', 'gender'
         ]
 
     def validate(self, data):
