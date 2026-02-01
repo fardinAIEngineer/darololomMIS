@@ -115,7 +115,7 @@ export const MainLayout: React.FC = () => {
               <Link to={ROUTES.DASHBOARD} className="flex mr-2 md:ml-24">
                 <School className="h-8 w-8 text-primary-600" />
                 <span className="self-center text-xl font-semibold sm:text-2xl whitespace-nowrap dark:text-white mr-2">
-                  سیستم مدیریت مدرسه
+                  سیستم مدیریت دارالعلوم عالی الحاج سید منصور نادری
                 </span>
               </Link>
             </div>
