@@ -74,7 +74,7 @@ class StudentRegistrationSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = [
-            'username', 'password', 'password_confirm', 'email', 'phone_number',
+            'email', 'password', 'password_confirm', 'phone_number',
             'name', 'father_name', 'gender', 'profile_image'
         ]
 
@@ -98,18 +98,18 @@ class LoginSerializer(serializers.Serializer):
     """
     Serializer for user login
     """
-    username = serializers.CharField()
+    email = serializers.EmailField()
     password = serializers.CharField(write_only=True)
 
     def validate(self, data):
-        username = data.get('username')
+        email = data.get('email')
         password = data.get('password')
 
-        if username and password:
-            user = authenticate(username=username, password=password)
+        if email and password:
+            user = authenticate(username=email, password=password)
             
             if not user:
-                raise serializers.ValidationError('نام کاربری یا رمز عبور نادرست است')
+                raise serializers.ValidationError('ایمیل یا رمز عبور نادرست است')
             
             if not user.is_active:
                 raise serializers.ValidationError('این حساب غیرفعال شده است')
@@ -125,7 +125,7 @@ class LoginSerializer(serializers.Serializer):
             
             data['user'] = user
         else:
-            raise serializers.ValidationError('نام کاربری و رمز عبور الزامی است')
+            raise serializers.ValidationError('ایمیل و رمز عبور الزامی است')
         
         return data
 

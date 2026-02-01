@@ -11,23 +11,28 @@ class UserManager(BaseUserManager):
     """
     Custom user manager
     """
-    def create_user(self, username, password=None, **extra_fields):
-        if not username:
-            raise ValueError('Users must have a username')
+    def create_user(self, email, password=None, **extra_fields):
+        if not email:
+            raise ValueError('Users must have an email address')
         
-        user = self.model(username=username, **extra_fields)
+        email = self.normalize_email(email)
+        # Generate username from email if not provided
+        if not extra_fields.get('username'):
+            extra_fields['username'] = email.split('@')[0]
+        
+        user = self.model(email=email, **extra_fields)
         user.set_password(password)
         user.save(using=self._db)
         return user
 
-    def create_superuser(self, username, password=None, **extra_fields):
+    def create_superuser(self, email, password=None, **extra_fields):
         extra_fields.setdefault('role', 'SUPER_ADMIN')
         extra_fields.setdefault('is_staff', True)
         extra_fields.setdefault('is_superuser', True)
         extra_fields.setdefault('is_active', True)
         extra_fields.setdefault('is_approved', True)
 
-        return self.create_user(username, password, **extra_fields)
+        return self.create_user(email, password, **extra_fields)
 
 
 class User(AbstractBaseUser, PermissionsMixin, TimeStampedModel):
@@ -53,8 +58,8 @@ class User(AbstractBaseUser, PermissionsMixin, TimeStampedModel):
     ]
 
     # Authentication fields
-    username = models.CharField('نام کاربری', max_length=150, unique=True)
-    email = models.EmailField('ایمیل', blank=True, null=True)
+    username = models.CharField('نام کاربری', max_length=150, unique=True, blank=True, null=True)
+    email = models.EmailField('ایمیل', unique=True)
     phone_regex = RegexValidator(
         regex=r'^\+?1?\d{9,15}$',
         message="شماره تلفن باید در فرمت: '+999999999' باشد. حداکثر 15 رقم مجاز است."
@@ -95,7 +100,7 @@ class User(AbstractBaseUser, PermissionsMixin, TimeStampedModel):
 
     objects = UserManager()
 
-    USERNAME_FIELD = 'username'
+    USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['name']
 
     class Meta:

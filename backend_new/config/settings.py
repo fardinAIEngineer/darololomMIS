@@ -103,6 +103,11 @@ AUTH_PASSWORD_VALIDATORS = [
 # Custom User Model
 AUTH_USER_MODEL = 'accounts.User'
 
+# Authentication backends (use email for login)
+AUTHENTICATION_BACKENDS = [
+    'apps.accounts.backends.EmailBackend',
+]
+
 # Internationalization
 LANGUAGE_CODE = 'en-us'
 TIME_ZONE = 'Asia/Kabul'

@@ -30,18 +30,17 @@ export interface User {
 }
 
 export interface LoginCredentials {
-  username: string;
+  email: string;
   password: string;
 }
 
 export interface RegisterData {
-  username: string;
+  email: string;
   password: string;
   password_confirm: string;
   name: string;
   father_name?: string;
   gender: Gender;
-  email?: string;
   phone_number?: string;
 }
 

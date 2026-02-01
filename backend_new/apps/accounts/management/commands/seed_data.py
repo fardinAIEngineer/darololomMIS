@@ -11,13 +11,13 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         # Create super admin if not exists
-        if not User.objects.filter(username='superadmin').exists():
+        if not User.objects.filter(email='admin@school.com').exists():
             User.objects.create_superuser(
-                username='superadmin',
+                email='admin@school.com',
                 password='Admin@123',
                 name='Super Admin'
             )
-            self.stdout.write(self.style.SUCCESS('✓ Created super admin (username: superadmin, password: Admin@123)'))
+            self.stdout.write(self.style.SUCCESS('✓ Created super admin (email: admin@school.com, password: Admin@123)'))
         else:
             self.stdout.write(self.style.WARNING('✗ Super admin already exists'))
 

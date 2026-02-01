@@ -3,8 +3,8 @@ Serializers for teachers app
 """
 from rest_framework import serializers
 from .models import Teacher
-from apps.accounts.serializers import UserSerializer
 from apps.accounts.models import User
+from apps.accounts.serializers import UserSerializer
 
 
 class TeacherSerializer(serializers.ModelSerializer):

@@ -3,6 +3,7 @@ Serializers for students app
 """
 from rest_framework import serializers
 from .models import Student
+from apps.accounts.models import User
 from apps.accounts.serializers import UserSerializer
 from apps.academics.serializers import SchoolClassListSerializer, SemesterSerializer
 
@@ -61,13 +62,14 @@ class StudentCreateSerializer(serializers.ModelSerializer):
         ]
 
     def create(self, validated_data):
-        from apps.accounts.models import User
-        
         # Extract user data
         username = validated_data.pop('username')
         password = validated_data.pop('password')
         email = validated_data.pop('email', '')
         phone_number = validated_data.pop('phone_number', '')
+        
+        # Extract many-to-many field
+        semesters = validated_data.pop('semesters', [])
         
         # Create user
         user = User.objects.create_user(
@@ -85,7 +87,5 @@ class StudentCreateSerializer(serializers.ModelSerializer):
         
         # Create student profile
         student = Student.objects.create(user=user, **validated_data)
+        student.semesters.set(semesters)
         return student
-
-
-from apps.accounts.models import User
