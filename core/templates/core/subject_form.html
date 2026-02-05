@@ -60,6 +60,24 @@
 
           <div>
             <label class="block text-sm font-semibold text-gray-700 mb-2">
+              {{ form.level.label }}
+              {% if form.level.field.required %}
+                <span class="text-danger-500">*</span>
+              {% endif %}
+            </label>
+            {{ form.level|add_class:"block w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors" }}
+            {% if form.level.errors %}
+              <p class="text-danger-600 text-sm mt-1 flex items-center gap-1">
+                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+                </svg>
+                {{ form.level.errors|striptags }}
+              </p>
+            {% endif %}
+          </div>
+
+          <div id="semester-section">
+            <label class="block text-sm font-semibold text-gray-700 mb-2">
               {{ form.semester.label }}
               {% if form.semester.field.required %}
                 <span class="text-danger-500">*</span>
@@ -76,6 +94,24 @@
             {% endif %}
             {% if form.semester.help_text %}
               <p class="text-gray-500 text-xs mt-1">{{ form.semester.help_text }}</p>
+            {% endif %}
+          </div>
+
+          <div id="period-section">
+            <label class="block text-sm font-semibold text-gray-700 mb-2">
+              {{ form.period.label }}
+              {% if form.period.field.required %}
+                <span class="text-danger-500">*</span>
+              {% endif %}
+            </label>
+            {{ form.period|add_class:"block w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors" }}
+            {% if form.period.errors %}
+              <p class="text-danger-600 text-sm mt-1 flex items-center gap-1">
+                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+                </svg>
+                {{ form.period.errors|striptags }}
+              </p>
             {% endif %}
           </div>
 
@@ -97,4 +133,48 @@
       </div>
     </div>
   </div>
+
+  {% if level_ids %}
+    {{ level_ids|json_script:"levelIds" }}
+  {% else %}
+    <script id="levelIds" type="application/json">{}</script>
+  {% endif %}
+
+{% block extra_js %}
+<script>
+  (function(){
+    const levelSelect = document.getElementById('id_level');
+    const semesterSection = document.getElementById('semester-section');
+    const periodSection = document.getElementById('period-section');
+    const levelIdsRaw = document.getElementById('levelIds') && document.getElementById('levelIds').textContent;
+    let levelIds = {};
+    try { levelIds = levelIdsRaw ? JSON.parse(levelIdsRaw) : {}; } catch(e){ levelIds = {}; }
+
+    function updateVisibility(){
+      if (!levelSelect) return;
+      const val = levelSelect.value;
+      if (!val){
+        if (semesterSection) semesterSection.style.display = 'none';
+        if (periodSection) periodSection.style.display = 'none';
+        return;
+      }
+      const isAali = levelIds.aali && String(val) === String(levelIds.aali);
+      if (semesterSection) semesterSection.style.display = isAali ? 'block' : 'none';
+      if (periodSection) periodSection.style.display = isAali ? 'none' : 'block';
+      if (!isAali){
+        const sem = document.getElementById('id_semester');
+        if (sem && !sem.value) sem.value = '1';
+      } else {
+        const per = document.getElementById('id_period');
+        if (per) per.value = '';
+      }
+    }
+
+    if (levelSelect){
+      levelSelect.addEventListener('change', updateVisibility);
+      updateVisibility();
+    }
+  })();
+</script>
+{% endblock %}
 {% endblock %}

@@ -289,8 +289,18 @@ def subject_list(request):
 
 	Supports simple name search via ?q= and pagination (20 per page).
 	"""
+	level_map = _ensure_reference_data()
+	level_param = request.GET.get('level', '').strip()
+	if level_param not in level_map:
+		level_param = 'aali'
 	q = request.GET.get('q', '').strip()
 	subjects = Subject.objects.all().order_by('-created_at')
+	if level_param in level_map:
+		level_obj = level_map[level_param]
+		if level_obj.code == 'aali':
+			subjects = subjects.filter(Q(level=level_obj) | Q(level__isnull=True))
+		else:
+			subjects = subjects.filter(level=level_obj)
 	if q:
 		subjects = subjects.filter(name__icontains=q)
 
@@ -301,12 +311,14 @@ def subject_list(request):
 	context = {
 		'q': q,
 		'page_obj': page_obj,
+		'selected_level': level_param,
 	}
 	return render(request, 'core/subject_list.html', context)
 
 
 def subject_create(request):
 	"""Create a new Subject (مضمون)."""
+	level_map = _ensure_reference_data()
 	if request.method == 'POST':
 		form = SubjectForm(request.POST)
 		if form.is_valid():
@@ -315,11 +327,13 @@ def subject_create(request):
 			return redirect(reverse('core:subject_list'))
 	else:
 		form = SubjectForm()
-	return render(request, 'core/subject_form.html', {'form': form})
+	level_ids = {k: v.id for k, v in level_map.items()}
+	return render(request, 'core/subject_form.html', {'form': form, 'level_ids': level_ids})
 
 
 def subject_edit(request, pk):
 	"""Edit an existing Subject."""
+	level_map = _ensure_reference_data()
 	subject = get_object_or_404(Subject, pk=pk)
 	if request.method == 'POST':
 		form = SubjectForm(request.POST, instance=subject)
@@ -329,7 +343,8 @@ def subject_edit(request, pk):
 			return redirect(reverse('core:subject_list'))
 	else:
 		form = SubjectForm(instance=subject)
-	return render(request, 'core/subject_form.html', {'form': form})
+	level_ids = {k: v.id for k, v in level_map.items()}
+	return render(request, 'core/subject_form.html', {'form': form, 'level_ids': level_ids})
 
 
 def subject_delete(request, pk):
@@ -348,8 +363,14 @@ def classes_list(request):
 	If there is no SchoolClass data yet, the page will show empty state (and the
 	"+ افزودن صنف جدید" button still allows creating new classes).
 	"""
+	level_map = _ensure_reference_data()
+	level_param = request.GET.get('level', '').strip()
+	if level_param not in level_map:
+		level_param = 'aali'
 	q = request.GET.get('q', '').strip()
 	classes = SchoolClass.objects.all().order_by('-created_at')
+	if level_param in level_map:
+		classes = classes.filter(level=level_map[level_param])
 	if q:
 		classes = classes.filter(name__icontains=q)
 
@@ -360,6 +381,7 @@ def classes_list(request):
 	context = {
 		'q': q,
 		'page_obj': page_obj,
+		'selected_level': level_param,
 	}
 	return render(request, 'core/classes_list.html', context)
 

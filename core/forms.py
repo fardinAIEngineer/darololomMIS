@@ -1,5 +1,5 @@
 from django import forms
-from .models import Student, SchoolClass, Subject
+from .models import Student, SchoolClass, Subject, StudyLevel, CoursePeriod
 from .models import Teacher
 
 
@@ -126,21 +126,65 @@ class SubjectForm(forms.ModelForm):
         model = Subject
         fields = [
             'name',
+            'level',
             'semester',
+            'period',
         ]
         labels = {
             'name': 'نام مضمون',
+            'level': 'سطح آموزشی',
             'semester': 'سمستر مربوطه',
+            'period': 'دوره',
         }
         widgets = {
             'name': forms.TextInput(attrs={
                 'class': 'border border-gray-300 rounded px-2 py-1 w-full',
                 'placeholder': 'نام مضمون را وارد کنید',
             }),
+            'level': forms.Select(attrs={
+                'class': 'border border-gray-300 rounded px-2 py-1 w-full',
+            }),
             'semester': forms.Select(choices=Subject.SEMESTER_CHOICES, attrs={
                 'class': 'border border-gray-300 rounded px-2 py-1',
             }),
+            'period': forms.Select(attrs={
+                'class': 'border border-gray-300 rounded px-2 py-1 w-full',
+            }),
         }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if 'level' in self.fields:
+            self.fields['level'].required = True
+            self.fields['level'].queryset = StudyLevel.objects.all()
+        if 'period' in self.fields:
+            self.fields['period'].required = False
+            self.fields['period'].queryset = CoursePeriod.objects.order_by('number')
+        if 'semester' in self.fields:
+            self.fields['semester'].required = False
+
+    def clean(self):
+        cleaned = super().clean()
+        level = cleaned.get('level')
+        semester = cleaned.get('semester')
+        period = cleaned.get('period')
+
+        if not level:
+            self.add_error('level', 'لطفاً سطح آموزشی را انتخاب کنید.')
+            return cleaned
+
+        if level.code == 'aali':
+            if not semester:
+                self.add_error('semester', 'لطفاً سمستر را انتخاب کنید.')
+            cleaned['period'] = None
+        else:
+            if not period:
+                self.add_error('period', 'لطفاً دوره را انتخاب کنید.')
+            # ensure semester has a valid default for non-aali
+            if not semester:
+                cleaned['semester'] = 1
+
+        return cleaned
 
 class TeacherForm(forms.ModelForm):
     class Meta:

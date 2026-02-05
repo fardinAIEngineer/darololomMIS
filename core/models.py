@@ -78,7 +78,9 @@ class Subject(models.Model):
 		(4, '4'),
 	]
 	name = models.CharField('نام مضمون', max_length=255, unique=True)
+	level = models.ForeignKey('StudyLevel', verbose_name='سطح آموزشی', null=True, blank=True, on_delete=models.SET_NULL)
 	semester = models.PositiveSmallIntegerField('سمستر مربوطه', choices=SEMESTER_CHOICES, default=1)
+	period = models.ForeignKey('CoursePeriod', verbose_name='دوره', null=True, blank=True, on_delete=models.SET_NULL)
 	created_at = models.DateTimeField('ایجاد شده در', auto_now_add=True)
 
 	class Meta:
