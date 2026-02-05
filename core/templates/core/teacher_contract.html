@@ -14,7 +14,7 @@
       </div>
     </div>
 
-    <form method="post" enctype="multipart/form-data" class="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+    <form method="post" enctype="multipart/form-data" class="contract-form grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
       {% csrf_token %}
 
       <div class="space-y-4">
@@ -86,40 +86,46 @@
       </div>
 
       <div>
-        <div id="contract-preview" class="contract-paper border border-gray-200 rounded-xl p-8">
-          <div class="text-center">
-            <div class="text-lg font-bold">قرارداد همکاری استاد</div>
-            <div class="mt-2 text-sm text-gray-700">
-              شماره قرارداد: <span id="preview-contract-number">{{ contract.contract_number|default:'—' }}</span>
-              <span class="mx-2">|</span>
-              تاریخ: <span id="preview-contract-date">{% if contract.contract_date %}{{ contract.contract_date|date:"Y/m/d" }}{% else %}—{% endif %}</span>
+        <div id="contract-preview" class="contract-paper p-8">
+          <div class="contract-header">
+            <div class="contract-logo">
+              <img src="{% url 'core:logo' %}" alt="لوگو" />
+            </div>
+            <div class="contract-org">
+              <div class="contract-org-title">دارالعلوم عالی الحاج سید منصور نادری</div>
+              <div class="contract-org-subtitle">قرارداد همکاری استاد</div>
+            </div>
+            <div class="contract-meta">
+              <div>شماره قرارداد: <span id="preview-contract-number" class="contract-value">{{ contract.contract_number|default:'—' }}</span></div>
+              <div>تاریخ: <span id="preview-contract-date" class="contract-value">{% if contract.contract_date %}{{ contract.contract_date|date:"Y/m/d" }}{% else %}—{% endif %}</span></div>
             </div>
           </div>
+          <div class="contract-divider"></div>
 
           <div class="mt-6 text-sm leading-7">
             <p>
               این قرارداد فی‌مابین دارالعلوم عالی الحاج سید منصور نادری (طرف اول)
-              و استاد <span class="font-semibold">{{ teacher.name }}</span>
-              فرزند <span class="font-semibold">{{ teacher.father_name|default:'—' }}</span>
-              با نمبر تذکره <span class="font-semibold">{{ teacher.id_number|default:'—' }}</span>
+              و استاد <span class="contract-value">{{ teacher.name }}</span>
+              فرزند <span class="contract-value">{{ teacher.father_name|default:'—' }}</span>
+              با نمبر تذکره <span class="contract-value">{{ teacher.id_number|default:'—' }}</span>
               (طرف دوم) منعقد می‌گردد.
             </p>
             <p class="mt-3">
-              سویه تحصیلی: <span class="font-semibold">{{ teacher.get_education_level_display }}</span> |
-              سطوح تدریس: <span class="font-semibold">{{ teacher_levels }}</span> |
-              مضامین: <span class="font-semibold">{{ teacher_subjects }}</span>
+              سویه تحصیلی: <span class="contract-value">{{ teacher.get_education_level_display }}</span> |
+              سطوح تدریس: <span class="contract-value">{{ teacher_levels }}</span> |
+              مضامین: <span class="contract-value">{{ teacher_subjects }}</span>
             </p>
             <p class="mt-3">
               مدت قرارداد از
-              <span id="preview-start-date" class="font-semibold">{% if contract.start_date %}{{ contract.start_date|date:"Y/m/d" }}{% else %}—{% endif %}</span>
+              <span id="preview-start-date" class="contract-value">{% if contract.start_date %}{{ contract.start_date|date:"Y/m/d" }}{% else %}—{% endif %}</span>
               الی
-              <span id="preview-end-date" class="font-semibold">{% if contract.end_date %}{{ contract.end_date|date:"Y/m/d" }}{% else %}—{% endif %}</span>
+              <span id="preview-end-date" class="contract-value">{% if contract.end_date %}{{ contract.end_date|date:"Y/m/d" }}{% else %}—{% endif %}</span>
               می‌باشد.
             </p>
             <p class="mt-3">
-              معاش ماهوار: <span id="preview-salary" class="font-semibold">{{ contract.monthly_salary|default:'—' }}</span> |
-              وظیفه/سمت: <span id="preview-position" class="font-semibold">{{ contract.position|default:'—' }}</span> |
-              ساعات کاری: <span id="preview-work-hours" class="font-semibold">{{ contract.work_hours|default:'—' }}</span>
+              معاش ماهوار: <span id="preview-salary" class="contract-value">{{ contract.monthly_salary|default:'—' }}</span> |
+              وظیفه/سمت: <span id="preview-position" class="contract-value">{{ contract.position|default:'—' }}</span> |
+              ساعات کاری: <span id="preview-work-hours" class="contract-value">{{ contract.work_hours|default:'—' }}</span>
             </p>
             <p class="mt-4 font-semibold">شرایط و توضیحات:</p>
             <p id="preview-terms" data-default-terms="{{ default_terms }}" class="mt-1 whitespace-pre-line">
@@ -127,14 +133,17 @@
             </p>
           </div>
 
-          <div class="mt-10 grid grid-cols-2 text-center text-sm">
-            <div>
-              <div class="border-t border-gray-300 pt-2">امضای استاد</div>
+          <div class="mt-10 grid grid-cols-2 gap-8 text-center text-sm">
+            <div class="contract-signature">
+              <div class="contract-sign-line"></div>
+              <div class="mt-2">امضای استاد</div>
             </div>
-            <div>
-              <div class="border-t border-gray-300 pt-2">امضای مقام دارالعلوم</div>
+            <div class="contract-signature">
+              <div class="contract-sign-line"></div>
+              <div class="mt-2">امضای مقام دارالعلوم</div>
             </div>
           </div>
+          <div class="contract-stamp">محل مهر رسمی</div>
         </div>
         <p class="text-xs text-gray-500 mt-3">برای چاپ، از دکمه «دانلود PDF» استفاده کنید. اگر متن خیلی طولانی باشد، PDF کوچک می‌شود.</p>
       </div>
@@ -146,9 +155,111 @@
       background: #ffffff;
       color: #0f172a;
       direction: rtl;
-      max-width: 800px;
+      width: 794px;
       margin: 0 auto;
-      min-height: 1120px;
+      min-height: 1123px;
+      position: relative;
+    }
+    .contract-paper .contract-value {
+      color: #0f172a;
+      font-weight: 700;
+    }
+    .contract-header {
+      display: grid;
+      grid-template-columns: 100px 1fr 220px;
+      align-items: center;
+      gap: 12px;
+    }
+    .contract-logo {
+      width: 96px;
+      height: 96px;
+      border: 1px solid #0f172a;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      background: #ffffff;
+    }
+    .contract-logo img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      padding: 8px;
+    }
+    .contract-org {
+      text-align: center;
+    }
+    .contract-org-title {
+      font-size: 18px;
+      font-weight: 700;
+    }
+    .contract-org-subtitle {
+      font-size: 14px;
+      color: #334155;
+      margin-top: 6px;
+    }
+    .contract-meta {
+      text-align: right;
+      font-size: 12px;
+      line-height: 1.6;
+      color: #334155;
+      border: 1px solid #0f172a;
+      padding: 10px 12px;
+      border-radius: 8px;
+    }
+    .contract-divider {
+      margin-top: 16px;
+      border-top: 2px solid #0f172a;
+    }
+    .contract-signature {
+      border: 1px dashed #64748b;
+      padding: 16px 12px;
+      border-radius: 10px;
+      min-height: 120px;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      align-items: center;
+    }
+    .contract-sign-line {
+      width: 80%;
+      border-top: 1px solid #0f172a;
+    }
+    .contract-stamp {
+      position: absolute;
+      left: 40px;
+      bottom: 40px;
+      width: 140px;
+      height: 140px;
+      border: 2px dashed #e5e7eb;
+      color: #e5e7eb;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: 700;
+    }
+    .contract-form input,
+    .contract-form textarea,
+    .contract-form select {
+      color: #0f172a;
+    }
+    .contract-form input::placeholder,
+    .contract-form textarea::placeholder {
+      color: #94a3b8;
+    }
+    html.dark .contract-form input,
+    html.dark .contract-form textarea,
+    html.dark .contract-form select {
+      color: #e2e8f0;
+      background-color: #0f172a;
+      border-color: #334155;
+    }
+    html.dark .contract-form input::placeholder,
+    html.dark .contract-form textarea::placeholder {
+      color: #94a3b8;
     }
     html.dark .contract-paper {
       background: #ffffff;
