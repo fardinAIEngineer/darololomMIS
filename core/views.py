@@ -68,20 +68,27 @@ def student_create(request):
 
 def student_list(request):
 	"""نمایش لیست دانش‌آموزان با قابلیت جستجو و صفحه‌بندی (20 در هر صفحه)."""
+	level_map = _ensure_reference_data()
+	level_param = request.GET.get('level', '').strip()
+	if level_param not in level_map:
+		level_param = 'aali'
 	q = request.GET.get('q', '').strip()
 	students = Student.objects.all().order_by('-created_at')
+	if level_param in level_map:
+		students = students.filter(level=level_map[level_param])
 	if q:
 		students = students.filter(
 			Q(name__icontains=q) | Q(father_name__icontains=q) | Q(mobile_number__icontains=q)
 		)
 
-	paginator = Paginator(students, 20)
+	paginator = Paginator(students, 10)
 	page_number = request.GET.get('page')
 	page_obj = paginator.get_page(page_number)
 
 	context = {
 		'q': q,
 		'page_obj': page_obj,
+		'selected_level': level_param,
 	}
 	return render(request, 'core/student_list.html', context)
 
