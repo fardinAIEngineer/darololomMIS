@@ -551,25 +551,31 @@ def student_delete(request, pk):
 
 def dashboard(request):
 	"""Dashboard view showing totals and a pie chart of students per class."""
+	level_map = _ensure_reference_data()
 	total_students = Student.objects.count()
 	total_teachers = Teacher.objects.count()
 	total_subjects = Subject.objects.count()
 	total_classes = SchoolClass.objects.count()
 
-	# Prepare data for pie chart: count of students per SchoolClass name.
-	classes = list(SchoolClass.objects.order_by('name'))
-	labels = [c.name for c in classes]
-	counts = [Student.objects.filter(school_class=c).count() for c in classes]
-
-	# If there are no defined classes but some students have school_class values,
-	# fall back to grouping by student.school_class values.
-	if not classes:
-		from django.db.models import Count
-		qs = Student.objects.values('school_class__name').annotate(cnt=Count('id')).order_by('-cnt')
-		labels = [x['school_class__name'] or 'نامشخص' for x in qs]
-		counts = [x['cnt'] for x in qs]
-
-	chart_json = mark_safe(json.dumps({'labels': labels, 'data': counts}))
+	# Pie chart: students by gender (مذکر/مونث)
+	male_total = Student.objects.filter(gender='male').count()
+	female_total = Student.objects.filter(gender='female').count()
+	chart_json = mark_safe(json.dumps({
+		'labels': ['مذکر', 'مونث'],
+		'data': [male_total, female_total],
+	}))
+	# Bar chart: students by level (عالی/متوسطه/ابتداییه)
+	level_order = ['aali', 'moteseta', 'ebtedai']
+	level_labels = [level_map[k].name for k in level_order if k in level_map]
+	level_counts = []
+	for k in level_order:
+		if k not in level_map:
+			continue
+		lv = level_map[k]
+		level_counts.append(
+			Student.objects.filter(Q(level=lv) | Q(level__isnull=True, school_class__level=lv)).count()
+		)
+	level_chart_json = mark_safe(json.dumps({'labels': level_labels, 'data': level_counts}))
 
 	context = {
 		'total_students': total_students,
@@ -577,6 +583,7 @@ def dashboard(request):
 		'total_subjects': total_subjects,
 		'total_classes': total_classes,
 		'chart_json': chart_json,
+		'level_chart_json': level_chart_json,
 	}
 	return render(request, 'core/dashboard.html', context)
 

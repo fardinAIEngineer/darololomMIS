@@ -108,19 +108,32 @@
   </div>
 
   <!-- Chart Section -->
-  <div class="bg-white rounded-2xl shadow-soft border border-gray-100 p-8">
-    <div class="mb-6">
-      <h2 class="text-xl font-bold text-gray-900 mb-1">تقسیم دانش‌آموزان براساس صنف</h2>
-      <p class="text-sm text-gray-500">نمودار دایره‌ای درصد دانش‌آموزان در هر صنف</p>
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <div class="bg-white rounded-2xl shadow-soft border border-gray-100 p-8">
+      <div class="mb-6">
+        <h2 class="text-xl font-bold text-gray-900 mb-1">تقسیم دانش‌آموزان براساس جنسیت</h2>
+        <p class="text-sm text-gray-500">نمودار دایره‌ای تعداد مذکر و مونث</p>
+      </div>
+      <div class="max-w-lg mx-auto">
+        <canvas id="studentsPie" width="400" height="400"></canvas>
+      </div>
     </div>
-    <div class="max-w-lg mx-auto">
-      <canvas id="studentsPie" width="400" height="400"></canvas>
+
+    <div class="bg-white rounded-2xl shadow-soft border border-gray-100 p-8">
+      <div class="mb-6">
+        <h2 class="text-xl font-bold text-gray-900 mb-1">تعداد دانش‌آموزان براساس سطح</h2>
+        <p class="text-sm text-gray-500">نمودار میله‌ای به تفکیک عالی، متوسطه و ابتداییه</p>
+      </div>
+      <div class="max-w-lg mx-auto">
+        <canvas id="studentsByLevelBar" width="400" height="300"></canvas>
+      </div>
     </div>
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <!-- embed chart JSON safely in the page to avoid direct template tokens inside JS -->
   <script id="chart-data" type="application/json">{{ chart_json }}</script>
+  <script id="level-chart-data" type="application/json">{{ level_chart_json }}</script>
   <script>
     (function(){
       const el = document.getElementById('chart-data');
@@ -132,11 +145,7 @@
       }
 
       const ctx = document.getElementById('studentsPie').getContext('2d');
-      const backgroundColors = (chartData.labels || []).map((_, i) => {
-        const hues = [220, 200, 180, 160, 140, 120, 100, 80, 60, 40];
-        const h = hues[i % hues.length];
-        return `hsl(${h} 70% 70%)`;
-      });
+      const backgroundColors = ['#3B82F6', '#F472B6'];
 
       new Chart(ctx, {
         type: 'pie',
@@ -151,6 +160,39 @@
         options: {
           plugins: {
             legend: { position: 'bottom' }
+          }
+        }
+      });
+
+      const levelEl = document.getElementById('level-chart-data');
+      let levelData = {labels: [], data: []};
+      try{
+        levelData = JSON.parse(levelEl ? levelEl.textContent : '{}') || levelData;
+      }catch(e){
+        console.error('Failed to parse level chart data', e);
+      }
+
+      const barCtx = document.getElementById('studentsByLevelBar').getContext('2d');
+      new Chart(barCtx, {
+        type: 'bar',
+        data: {
+          labels: levelData.labels,
+          datasets: [{
+            label: 'تعداد دانش‌آموزان',
+            data: levelData.data,
+            backgroundColor: ['#3B82F6', '#10B981', '#F59E0B'],
+            borderRadius: 6,
+          }]
+        },
+        options: {
+          plugins: {
+            legend: { display: false }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              ticks: { precision: 0 }
+            }
           }
         }
       });
