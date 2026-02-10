@@ -180,7 +180,9 @@
 
   <!-- Behavior Modal -->
   <div id="teacherBehaviorModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
-    <div class="bg-white rounded-2xl shadow-2xl max-w-xl w-full animate-slide-up">
+    <div class="bg-white rounded-2xl shadow-2xl max-w-xl w-full animate-slide-up"
+         data-update-url-template="{% url 'core:teacher_behavior_update' 0 %}"
+         data-delete-url-template="{% url 'core:teacher_behavior_delete' 0 %}">
       <div class="flex items-center justify-between p-4 border-b border-gray-200 bg-gray-50">
         <div>
           <h3 class="text-lg font-bold text-gray-900">ثبت تخلف/امتیاز</h3>
@@ -213,12 +215,18 @@
             <input type="hidden" name="next" value="{{ request.get_full_path }}">
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-2">توضیحات (اختیاری)</label>
-              <textarea name="note" rows="3" class="w-full rounded-lg border border-gray-300 p-3 text-sm focus:ring-2 focus:ring-danger-500 focus:border-danger-500" placeholder="شرح تخلف..."></textarea>
+              <textarea name="note" rows="3" class="w-full rounded-lg border border-gray-300 p-3 text-sm placeholder-gray-500 focus:ring-2 focus:ring-danger-500 focus:border-danger-500" style="color:#000;" placeholder="شرح تخلف..."></textarea>
             </div>
             <button type="submit" class="inline-flex items-center gap-2 bg-danger-600 hover:bg-danger-700 text-white px-5 py-2.5 rounded-lg text-sm font-medium transition-all duration-200">
               ثبت تخلف
             </button>
           </form>
+
+          <div class="mt-5 border-t border-gray-200 pt-4">
+            <h4 class="text-sm font-semibold text-gray-700 mb-2">سوابق تخلف</h4>
+            <div id="teacherHistoryViolation" class="space-y-2"></div>
+            <div id="teacherHistoryViolationEmpty" class="text-xs text-gray-500">هیچ تخلفی ثبت نشده است.</div>
+          </div>
         </div>
 
         <div data-teacher-behavior-panel="merit" class="hidden">
@@ -229,21 +237,63 @@
             <input type="hidden" name="next" value="{{ request.get_full_path }}">
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-2">توضیحات (اختیاری)</label>
-              <textarea name="note" rows="3" class="w-full rounded-lg border border-gray-300 p-3 text-sm focus:ring-2 focus:ring-success-500 focus:border-success-500" placeholder="شرح امتیاز..."></textarea>
+              <textarea name="note" rows="3" class="w-full rounded-lg border border-gray-300 p-3 text-sm placeholder-gray-500 focus:ring-2 focus:ring-success-500 focus:border-success-500" style="color:#000;" placeholder="شرح امتیاز..."></textarea>
             </div>
             <button type="submit" class="inline-flex items-center gap-2 bg-success-600 hover:bg-success-700 text-white px-5 py-2.5 rounded-lg text-sm font-medium transition-all duration-200">
               ثبت امتیاز
             </button>
           </form>
+
+          <div class="mt-5 border-t border-gray-200 pt-4">
+            <h4 class="text-sm font-semibold text-gray-700 mb-2">سوابق امتیاز</h4>
+            <div id="teacherHistoryMerit" class="space-y-2"></div>
+            <div id="teacherHistoryMeritEmpty" class="text-xs text-gray-500">هیچ امتیازی ثبت نشده است.</div>
+          </div>
         </div>
       </div>
     </div>
   </div>
 
+  <script id="teachersData" type="application/json">
+    [
+      {% for teacher in page_obj.object_list %}
+        {
+          "id": {{ teacher.pk }},
+          "name": "{{ teacher.name|escapejs }}",
+          "behavior_entries": [
+            {% for entry in teacher.behavior_entries.all %}
+              {
+                "id": {{ entry.id }},
+                "type": "{{ entry.entry_type }}",
+                "note": "{{ entry.note|default:'-'|escapejs }}",
+                "created_at": "{{ entry.created_at|date:'Y-m-d H:i' }}",
+                "created_at_iso": "{{ entry.created_at|date:'c' }}"
+              }{% if not forloop.last %},{% endif %}
+            {% endfor %}
+          ]
+        }{% if not forloop.last %},{% endif %}
+      {% endfor %}
+    ]
+  </script>
+
   <script>
     document.addEventListener('DOMContentLoaded', function() {
       const modal = document.getElementById('teacherBehaviorModal');
       if (!modal) return;
+
+      let teachersData = [];
+      try {
+        const raw = document.getElementById('teachersData');
+        teachersData = raw ? JSON.parse(raw.textContent) : [];
+        window.teachersData = teachersData;
+      } catch (e) {
+        console.error('Failed to parse teachers data', e);
+        window.teachersData = [];
+      }
+
+      const modalContainer = modal.querySelector('.max-w-xl');
+      const updateUrlTemplate = modalContainer ? modalContainer.getAttribute('data-update-url-template') : '';
+      const deleteUrlTemplate = modalContainer ? modalContainer.getAttribute('data-delete-url-template') : '';
 
       const openButtons = document.querySelectorAll('.btn-teacher-behavior');
       const closeBtn = document.getElementById('teacherBehaviorCloseBtn');
@@ -251,6 +301,19 @@
       const idInputs = modal.querySelectorAll('.teacher-behavior-id');
       const tabButtons = modal.querySelectorAll('[data-teacher-behavior-tab]');
       const panels = modal.querySelectorAll('[data-teacher-behavior-panel]');
+      let currentTeacherId = null;
+
+      function getCookie(name) {
+        const value = `; ${document.cookie}`;
+        const parts = value.split(`; ${name}=`);
+        if (parts.length === 2) return parts.pop().split(';').shift();
+        return '';
+      }
+
+      function buildUrl(template, id) {
+        if (!template) return '';
+        return template.replace('/0/', `/${id}/`);
+      }
 
       function setActiveTab(tabName) {
         tabButtons.forEach(btn => {
@@ -266,12 +329,139 @@
         });
       }
 
+      async function updateEntryNote(entryId, newNote) {
+        const url = buildUrl(updateUrlTemplate, entryId);
+        if (!url) return false;
+        const csrfToken = getCookie('csrftoken');
+        const resp = await fetch(url, {
+          method: 'POST',
+          headers: {
+            'X-CSRFToken': csrfToken,
+            'Content-Type': 'application/x-www-form-urlencoded',
+          },
+          body: new URLSearchParams({ note: newNote }),
+          credentials: 'same-origin',
+        });
+        return resp.ok;
+      }
+
+      async function deleteEntry(entryId) {
+        const url = buildUrl(deleteUrlTemplate, entryId);
+        if (!url) return false;
+        const csrfToken = getCookie('csrftoken');
+        const resp = await fetch(url, {
+          method: 'POST',
+          headers: {
+            'X-CSRFToken': csrfToken,
+            'Content-Type': 'application/x-www-form-urlencoded',
+          },
+          body: new URLSearchParams({}),
+          credentials: 'same-origin',
+        });
+        return resp.ok;
+      }
+
+      function renderBehaviorHistory(entries) {
+        const violationList = document.getElementById('teacherHistoryViolation');
+        const meritList = document.getElementById('teacherHistoryMerit');
+        const violationEmpty = document.getElementById('teacherHistoryViolationEmpty');
+        const meritEmpty = document.getElementById('teacherHistoryMeritEmpty');
+
+        if (!violationList || !meritList) return;
+
+        const sorted = (entries || []).slice().sort((a, b) => {
+          const aKey = a.created_at_iso || '';
+          const bKey = b.created_at_iso || '';
+          return bKey.localeCompare(aKey);
+        });
+
+        const violations = sorted.filter(item => item.type === 'violation');
+        const merits = sorted.filter(item => item.type === 'merit');
+
+        function fill(listEl, emptyEl, items) {
+          listEl.innerHTML = '';
+          if (!items.length) {
+            if (emptyEl) emptyEl.classList.remove('hidden');
+            return;
+          }
+          if (emptyEl) emptyEl.classList.add('hidden');
+          items.forEach(item => {
+            const row = document.createElement('div');
+            row.className = 'flex items-start justify-between gap-3 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm';
+
+            const note = document.createElement('div');
+            note.className = 'flex-1 text-gray-900';
+            note.textContent = (item.note && item.note.trim()) ? item.note : 'بدون توضیح';
+
+            const time = document.createElement('div');
+            time.className = 'text-xs text-gray-500 whitespace-nowrap';
+            time.textContent = item.created_at || '';
+
+            const actions = document.createElement('div');
+            actions.className = 'flex items-center gap-2 whitespace-nowrap';
+
+            const editBtn = document.createElement('button');
+            editBtn.type = 'button';
+            editBtn.className = 'text-xs text-blue-600 hover:text-blue-800';
+            editBtn.textContent = 'ویرایش';
+            editBtn.addEventListener('click', async () => {
+              const current = (item.note && item.note.trim()) ? item.note : '';
+              const updated = window.prompt('ویرایش توضیح:', current);
+              if (updated === null) return;
+              const ok = await updateEntryNote(item.id, updated.trim());
+              if (!ok) {
+                alert('ویرایش موفق نشد.');
+                return;
+              }
+              item.note = updated.trim();
+              note.textContent = item.note ? item.note : 'بدون توضیح';
+            });
+
+            const deleteBtn = document.createElement('button');
+            deleteBtn.type = 'button';
+            deleteBtn.className = 'text-xs text-red-600 hover:text-red-800';
+            deleteBtn.textContent = 'حذف';
+            deleteBtn.addEventListener('click', async () => {
+              if (!confirm('آیا مطمئن هستید که حذف شود؟')) return;
+              const ok = await deleteEntry(item.id);
+              if (!ok) {
+                alert('حذف موفق نشد.');
+                return;
+              }
+              const idxAll = entries.findIndex(x => x.id === item.id);
+              if (idxAll !== -1) entries.splice(idxAll, 1);
+              renderBehaviorHistory(entries);
+            });
+
+            actions.appendChild(editBtn);
+            actions.appendChild(deleteBtn);
+
+            row.appendChild(note);
+            row.appendChild(time);
+            row.appendChild(actions);
+            listEl.appendChild(row);
+          });
+        }
+
+        fill(violationList, violationEmpty, violations);
+        fill(meritList, meritEmpty, merits);
+      }
+
       function openModal(teacherId, teacherName) {
         idInputs.forEach(input => {
           input.value = teacherId;
         });
+        currentTeacherId = parseInt(teacherId, 10);
         if (nameEl) {
           nameEl.textContent = teacherName || '—';
+        }
+        const teacher = Array.isArray(window.teachersData)
+          ? window.teachersData.find(item => item.id === currentTeacherId)
+          : null;
+        if (teacher && Array.isArray(teacher.behavior_entries)) {
+          renderBehaviorHistory(teacher.behavior_entries);
+        } else {
+          renderBehaviorHistory([]);
         }
         setActiveTab('violation');
         modal.classList.remove('hidden');

@@ -1,7 +1,7 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse
 from django.core.paginator import Paginator
-from django.db.models import Q, Count
+from django.db.models import Q, Count, Prefetch
 from django.contrib import messages
 from django.http import FileResponse, Http404, JsonResponse
 from django.conf import settings
@@ -86,6 +86,9 @@ def student_list(request):
 	students = students.annotate(
 		merit_count=Count('behavior_entries', filter=Q(behavior_entries__entry_type='merit'), distinct=True),
 	)
+	students = students.prefetch_related(
+		Prefetch('behavior_entries', queryset=StudentBehavior.objects.order_by('-created_at'))
+	)
 
 	paginator = Paginator(students, 10)
 	page_number = request.GET.get('page')
@@ -109,6 +112,9 @@ def teacher_list(request):
 		)
 	teachers = teachers.annotate(
 		merit_count=Count('behavior_entries', filter=Q(behavior_entries__entry_type='merit'), distinct=True),
+	)
+	teachers = teachers.prefetch_related(
+		Prefetch('behavior_entries', queryset=TeacherBehavior.objects.order_by('-created_at'))
 	)
 
 	paginator = Paginator(teachers, 20)
@@ -160,6 +166,42 @@ def teacher_behavior_add(request):
 	else:
 		messages.success(request, 'امتیاز استاد ثبت شد.')
 	return redirect(next_url)
+
+
+def student_behavior_update(request, pk):
+	if request.method != 'POST':
+		return JsonResponse({'ok': False}, status=405)
+	entry = get_object_or_404(StudentBehavior, pk=pk)
+	note = (request.POST.get('note') or '').strip()
+	entry.note = note
+	entry.save(update_fields=['note'])
+	return JsonResponse({'ok': True, 'note': entry.note})
+
+
+def student_behavior_delete(request, pk):
+	if request.method != 'POST':
+		return JsonResponse({'ok': False}, status=405)
+	entry = get_object_or_404(StudentBehavior, pk=pk)
+	entry.delete()
+	return JsonResponse({'ok': True})
+
+
+def teacher_behavior_update(request, pk):
+	if request.method != 'POST':
+		return JsonResponse({'ok': False}, status=405)
+	entry = get_object_or_404(TeacherBehavior, pk=pk)
+	note = (request.POST.get('note') or '').strip()
+	entry.note = note
+	entry.save(update_fields=['note'])
+	return JsonResponse({'ok': True, 'note': entry.note})
+
+
+def teacher_behavior_delete(request, pk):
+	if request.method != 'POST':
+		return JsonResponse({'ok': False}, status=405)
+	entry = get_object_or_404(TeacherBehavior, pk=pk)
+	entry.delete()
+	return JsonResponse({'ok': True})
 
 
 def student_appreciation_print(request, pk):
