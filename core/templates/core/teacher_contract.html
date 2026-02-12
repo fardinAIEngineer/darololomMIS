@@ -97,26 +97,32 @@
              data-id-number="{{ teacher.id_number|default:'' }}"
              data-education-level="{{ teacher.get_education_level_display|default:'' }}">
           <div class="contract-header">
-            <div class="contract-logo">
-              <img src="{% url 'core:emirate_logo' %}" alt="لوگوی امارت" onerror="this.style.display='none';" />
-            </div>
-            <div class="contract-org">
-              <div class="contract-org-line">وزارت معارف</div>
-              <div class="contract-org-line">معینیت تعلیمات اسلامی</div>
-              <div class="contract-org-line contract-org-title">دارالعلوم عالی الحاج سید منصور نادری</div>
-              <div class="contract-org-line">مدیریت اداری</div>
-              <div class="contract-org-line contract-org-meta">
+            <div class="contract-logo-block">
+              <div class="contract-logo">
+                <img src="{% url 'core:emirate_logo' %}" alt="لوگوی امارت" onerror="this.style.display='none';" />
+              </div>
+              <div class="contract-logo-meta">
                 تاریخ:
                 <span id="header-date-day">—</span>
                 /
                 <span id="header-date-month">—</span>
                 /
                 <span id="header-date-year">—</span>
-                &nbsp;&nbsp;&nbsp;&nbsp;قرار داد کارمندان&nbsp;&nbsp;&nbsp;&nbsp;شماره ثبت: ( <span id="preview-contract-number" class="contract-value">{{ contract.contract_number|default:'—' }}</span> )
               </div>
             </div>
-            <div class="contract-logo">
-              <img src="{% url 'core:logo' %}" alt="لوگوی دارالعلوم" onerror="this.style.display='none';" />
+            <div class="contract-org">
+              <div class="contract-org-line">وزارت معارف</div>
+              <div class="contract-org-line">معینیت تعلیمات اسلامی</div>
+              <div class="contract-org-line contract-org-title">دارالعلوم عالی الحاج سید منصور نادری</div>
+              <div class="contract-org-line">مدیریت اداری</div>
+            </div>
+            <div class="contract-logo-block">
+              <div class="contract-logo">
+                <img src="{% url 'core:logo' %}" alt="لوگوی دارالعلوم" onerror="this.style.display='none';" />
+              </div>
+              <div class="contract-logo-meta">
+                شماره ثبت: ( <span id="preview-contract-number" class="contract-value">{{ contract.contract_number|default:'—' }}</span> )
+              </div>
             </div>
           </div>
           <div class="contract-divider"></div>
@@ -160,16 +166,27 @@
       color: #0f172a;
       font-weight: 700;
     }
+    #preview-terms {
+      white-space: pre-wrap;
+      line-height: 1.9;
+      word-break: break-word;
+      overflow-wrap: anywhere;
+    }
     .contract-header {
       display: grid;
       grid-template-columns: 100px 1fr 100px;
       align-items: center;
       gap: 12px;
     }
+    .contract-logo-block {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+    }
     .contract-logo {
       width: 96px;
       height: 96px;
-      border: 1px solid #0f172a;
       border-radius: 8px;
       display: flex;
       align-items: center;
@@ -183,18 +200,24 @@
       object-fit: contain;
       padding: 8px;
     }
+    .contract-logo-meta {
+      font-size: 12px;
+      color: #334155;
+      white-space: nowrap;
+    }
     .contract-org {
       text-align: center;
       line-height: 1.5;
     }
     .contract-org-line {
-      font-size: 13px;
+      font-size: 16px;
+      font-weight: 700;
       color: #0f172a;
     }
     .contract-org-title {
-      font-size: 17px;
+      font-size: inherit;
       font-weight: 700;
-      margin-top: 2px;
+      margin-top: 0;
     }
     .contract-org-meta {
       margin-top: 6px;
@@ -541,7 +564,6 @@
           if (!preview) return;
           try {
             const canvas = await html2canvas(preview, { scale: 2, useCORS: true });
-            const imgData = canvas.toDataURL('image/png');
             const { jsPDF } = window.jspdf || window;
             if (!jsPDF) {
               alert('کتابخانه PDF بارگذاری نشد.');
@@ -553,21 +575,34 @@
             const margin = 24;
             const usableWidth = pageWidth - (margin * 2);
             const scale = usableWidth / canvas.width;
-            const imgWidth = canvas.width * scale;
-            const imgHeight = canvas.height * scale;
-            const pageSlice = pageHeight - (margin * 2);
+            const pageSlicePx = (pageHeight - (margin * 2)) / scale;
+            let renderedHeight = 0;
+            let pageIndex = 0;
 
-            let position = margin;
-            let heightLeft = imgHeight;
+            while (renderedHeight < canvas.height) {
+              const sliceHeight = Math.min(pageSlicePx, canvas.height - renderedHeight);
+              const pageCanvas = document.createElement('canvas');
+              pageCanvas.width = canvas.width;
+              pageCanvas.height = sliceHeight;
+              const ctx = pageCanvas.getContext('2d');
+              ctx.drawImage(
+                canvas,
+                0,
+                renderedHeight,
+                canvas.width,
+                sliceHeight,
+                0,
+                0,
+                canvas.width,
+                sliceHeight
+              );
 
-            pdf.addImage(imgData, 'PNG', margin, position, imgWidth, imgHeight);
-            heightLeft -= pageSlice;
-
-            while (heightLeft > 0) {
-              pdf.addPage();
-              position = margin - (imgHeight - heightLeft);
-              pdf.addImage(imgData, 'PNG', margin, position, imgWidth, imgHeight);
-              heightLeft -= pageSlice;
+              const imgData = pageCanvas.toDataURL('image/png');
+              if (pageIndex > 0) pdf.addPage();
+              const imgHeight = sliceHeight * scale;
+              pdf.addImage(imgData, 'PNG', margin, margin, usableWidth, imgHeight);
+              renderedHeight += sliceHeight;
+              pageIndex += 1;
             }
 
             pdf.save('teacher-contract-{{ teacher.pk }}.pdf');
