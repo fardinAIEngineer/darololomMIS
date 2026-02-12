@@ -217,7 +217,6 @@ class TeacherContractForm(forms.ModelForm):
     class Meta:
         model = TeacherContract
         fields = [
-            'contract_number',
             'contract_date',
             'start_date',
             'end_date',
@@ -228,7 +227,6 @@ class TeacherContractForm(forms.ModelForm):
             'signed_file',
         ]
         labels = {
-            'contract_number': 'شماره قرارداد',
             'contract_date': 'تاریخ قرارداد',
             'start_date': 'تاریخ شروع',
             'end_date': 'تاریخ ختم',
@@ -239,7 +237,6 @@ class TeacherContractForm(forms.ModelForm):
             'signed_file': 'فایل قرارداد امضاشده',
         }
         widgets = {
-            'contract_number': forms.TextInput(attrs={'class': 'border border-gray-300 rounded px-2 py-1 w-full'}),
             'contract_date': forms.TextInput(attrs={
                 'class': 'border border-gray-300 rounded px-2 py-1 w-full',
                 'placeholder': 'مثلاً ۱۴۰۲/۰۵/۱۰',
@@ -261,7 +258,7 @@ class TeacherContractForm(forms.ModelForm):
             'monthly_salary': forms.TextInput(attrs={'class': 'border border-gray-300 rounded px-2 py-1 w-full', 'placeholder': 'مثلاً ۱۵۰۰۰ افغانی'}),
             'position': forms.TextInput(attrs={'class': 'border border-gray-300 rounded px-2 py-1 w-full'}),
             'work_hours': forms.TextInput(attrs={'class': 'border border-gray-300 rounded px-2 py-1 w-full', 'placeholder': 'مثلاً ۸ صبح تا ۲ بعد از ظهر'}),
-            'terms': forms.Textarea(attrs={'rows': 5, 'class': 'border border-gray-300 rounded px-2 py-1 w-full'}),
+            'terms': forms.Textarea(attrs={'rows': 8, 'class': 'border border-gray-300 rounded px-2 py-1 w-full', 'readonly': 'readonly'}),
             'signed_file': forms.ClearableFileInput(attrs={
                 'class': 'border border-gray-300 rounded px-2 py-1 w-full text-sm',
                 'accept': '.pdf,image/*',

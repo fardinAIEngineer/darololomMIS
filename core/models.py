@@ -1,3 +1,4 @@
+import secrets
 from django.db import models
 
 
@@ -148,7 +149,7 @@ class Teacher(models.Model):
 class TeacherContract(models.Model):
 	"""Model representing a teacher contract (قرارداد استاد)."""
 	teacher = models.OneToOneField(Teacher, verbose_name='استاد', on_delete=models.CASCADE, related_name='contract')
-	contract_number = models.CharField('شماره قرارداد', max_length=100, blank=True)
+	contract_number = models.CharField('شماره قرارداد', max_length=100, blank=True, editable=False)
 	contract_date = models.DateField('تاریخ قرارداد', blank=True, null=True)
 	start_date = models.DateField('تاریخ شروع', blank=True, null=True)
 	end_date = models.DateField('تاریخ ختم', blank=True, null=True)
@@ -166,6 +167,21 @@ class TeacherContract(models.Model):
 
 	def __str__(self) -> str:
 		return f"قرارداد {self.teacher.name}"
+
+	@staticmethod
+	def _generate_contract_number():
+		return f"{secrets.randbelow(10**8):08d}"
+
+	def save(self, *args, **kwargs):
+		if not self.contract_number:
+			for _ in range(20):
+				candidate = self._generate_contract_number()
+				if not TeacherContract.objects.filter(contract_number=candidate).exists():
+					self.contract_number = candidate
+					break
+			if not self.contract_number:
+				raise ValueError('Failed to generate unique contract number')
+		super().save(*args, **kwargs)
 
 
 class Semester(models.Model):

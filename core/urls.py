@@ -5,6 +5,7 @@ app_name = 'core'
 
 urlpatterns = [
     path('logo.jpg', views.logo, name='logo'),
+    path('emirate.png', views.emirate_logo, name='emirate_logo'),
     path('dashboard/', views.dashboard, name='dashboard'),
     path('students/new/', views.student_create, name='student_create'),
     path('students/<int:pk>/edit/', views.student_edit, name='student_edit'),
