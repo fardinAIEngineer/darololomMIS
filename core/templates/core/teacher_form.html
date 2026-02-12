@@ -437,19 +437,71 @@
       setIndicatorStyles(safeStep);
     }
 
+    function requireValue(selector, message, stepOverride) {
+      const el = form.querySelector(selector);
+      if (!el) return true;
+      const value = (el.value || '').trim();
+      if (!value) {
+        setStep(stepOverride || currentStep);
+        alert(message);
+        if (el.focus) el.focus();
+        return false;
+      }
+      return true;
+    }
+
+    function requireAnyHidden(containerSelector, message, stepOverride) {
+      const container = form.querySelector(containerSelector);
+      if (!container) return true;
+      const hiddenInputs = container.querySelectorAll('input[type="hidden"]');
+      if (!hiddenInputs.length) {
+        setStep(stepOverride || currentStep);
+        alert(message);
+        return false;
+      }
+      return true;
+    }
+
     function validateStep(step) {
       const panel = getPanel(step);
       if (!panel) return true;
 
-      const controls = Array.from(panel.querySelectorAll('input, select, textarea'));
-      for (const control of controls) {
-        if (!control.willValidate) continue;
-        if (!control.checkValidity()) {
-          setStep(step);
-          control.reportValidity();
-          return false;
+      if (step === 1) {
+        if (!requireValue('#id_name', 'نام و تخلص استاد را وارد کنید.', step)) return false;
+        if (!requireValue('#id_father_name', 'نام پدر را وارد کنید.', step)) return false;
+      }
+
+      if (step === 2) {
+        if (!requireValue('#id_permanent_address', 'ولایت اصلی را وارد کنید.', step)) return false;
+        if (!requireValue('#id_district', 'ولسوالی را وارد کنید.', step)) return false;
+        if (!requireValue('#id_village', 'قریه را وارد کنید.', step)) return false;
+        if (!requireValue('#id_current_address', 'ولایت فعلی را وارد کنید.', step)) return false;
+        if (!requireValue('#id_area', 'ناحیه را وارد کنید.', step)) return false;
+      }
+
+      if (step === 3) {
+        if (!requireValue('#id_gender', 'جنسیت را انتخاب کنید.', step)) return false;
+        if (!requireValue('#id_education_level', 'سویه تحصیلی را انتخاب کنید.', step)) return false;
+        if (!requireValue('#id_id_number', 'نمبر تذکره را وارد کنید.', step)) return false;
+      }
+
+      if (step === 4) {
+        if (!requireAnyHidden('#selected_levels', 'حداقل یک سطح تدریس را انتخاب کنید.', step)) return false;
+        if (!requireAnyHidden('#selected_classes', 'حداقل یک صنف را انتخاب کنید.', step)) return false;
+        if (!requireAnyHidden('#selected_subjects', 'حداقل یک مضمون را انتخاب کنید.', step)) return false;
+
+        const levelValues = Array.from(form.querySelectorAll('#selected_levels input[type="hidden"]')).map((el) => el.value);
+        if (levelValues.includes('aali')) {
+          if (!requireAnyHidden('#selected_semesters', 'برای دوره عالی، حداقل یک سمستر را انتخاب کنید.', step)) return false;
+        }
+        if (levelValues.includes('ebtedai')) {
+          if (!requireAnyHidden('#selected_periods_ebtedai', 'برای دوره ابتداییه، حداقل یک دوره را انتخاب کنید.', step)) return false;
+        }
+        if (levelValues.includes('moteseta')) {
+          if (!requireAnyHidden('#selected_periods_moteseta', 'برای دوره متوسطه، حداقل یک دوره را انتخاب کنید.', step)) return false;
         }
       }
+
       return true;
     }
 

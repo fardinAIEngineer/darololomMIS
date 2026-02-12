@@ -739,19 +739,108 @@
       setIndicatorStyles(safeStep);
     }
 
+    function requireValue(selector, message, focusSelector, stepOverride) {
+      const el = form.querySelector(selector);
+      if (!el) return true;
+      const value = (el.value || '').trim();
+      if (!value) {
+        setStep(stepOverride || currentStep);
+        alert(message);
+        const focusEl = focusSelector ? form.querySelector(focusSelector) : el;
+        if (focusEl && focusEl.focus) focusEl.focus();
+        return false;
+      }
+      return true;
+    }
+
+    function requireChecked(selector, message, stepOverride) {
+      const el = form.querySelector(selector);
+      if (!el) return true;
+      if (!el.checked) {
+        setStep(stepOverride || currentStep);
+        alert(message);
+        if (el.focus) el.focus();
+        return false;
+      }
+      return true;
+    }
+
+    function requireAnyChecked(containerSelector, message, stepOverride) {
+      const container = form.querySelector(containerSelector);
+      if (!container) return true;
+      const checked = container.querySelectorAll('input[type="checkbox"]:checked');
+      if (!checked.length) {
+        setStep(stepOverride || currentStep);
+        alert(message);
+        return false;
+      }
+      return true;
+    }
+
+    function requireAnyHidden(containerSelector, message, stepOverride) {
+      const container = form.querySelector(containerSelector);
+      if (!container) return true;
+      const hiddenInputs = container.querySelectorAll('input[type="hidden"]');
+      if (!hiddenInputs.length) {
+        setStep(stepOverride || currentStep);
+        alert(message);
+        return false;
+      }
+      return true;
+    }
+
     function validateStep(step) {
       const panel = getPanel(step);
       if (!panel) return true;
 
-      const controls = Array.from(panel.querySelectorAll('input, select, textarea'));
-      for (const control of controls) {
-        if (!control.willValidate) continue;
-        if (!control.checkValidity()) {
-          setStep(step);
-          control.reportValidity();
-          return false;
+      const levelIds = {
+        aali: '{{ level_ids.aali|default:"" }}',
+        moteseta: '{{ level_ids.moteseta|default:"" }}',
+        ebtedai: '{{ level_ids.ebtedai|default:"" }}',
+      };
+
+      if (step === 1) {
+        if (!requireValue('#id_name', 'نام و نام خانوادگی را وارد کنید.', null, step)) return false;
+        if (!requireValue('#id_father_name', 'نام پدر را وارد کنید.', null, step)) return false;
+        if (!requireValue('#id_grandfather_name', 'نام پدر کلان را وارد کنید.', null, step)) return false;
+      }
+
+      if (step === 2) {
+        if (!requireValue('#id_permanent_address', 'ولایت اصلی را وارد کنید.', null, step)) return false;
+        if (!requireValue('#id_district', 'ولسوالی را وارد کنید.', null, step)) return false;
+        if (!requireValue('#id_village', 'قریه را وارد کنید.', null, step)) return false;
+        if (!requireValue('#id_current_address', 'ولایت فعلی را وارد کنید.', null, step)) return false;
+        if (!requireValue('#id_area', 'ناحیه را وارد کنید.', null, step)) return false;
+      }
+
+      if (step === 3) {
+        if (!requireValue('#id_time_start', 'تایم آغاز را وارد کنید.', null, step)) return false;
+        if (!requireValue('#id_time_end', 'تایم ختم را وارد کنید.', null, step)) return false;
+        if (!requireValue('#id_id_number', 'نمبر تذکره را وارد کنید.', null, step)) return false;
+        if (!requireValue('#id_gender', 'جنسیت را انتخاب کنید.', null, step)) return false;
+        if (!requireValue('#id_exam_number', 'نمبر امتحان کانکور را وارد کنید.', null, step)) return false;
+        if (!requireValue('#id_level', 'سطح آموزشی را انتخاب کنید.', null, step)) return false;
+
+        const levelValue = (form.querySelector('#id_level') && form.querySelector('#id_level').value) || '';
+        const isAali = levelIds.aali && String(levelValue) === String(levelIds.aali);
+        const isEbtedai = levelIds.ebtedai && String(levelValue) === String(levelIds.ebtedai);
+        const isMoteseta = levelIds.moteseta && String(levelValue) === String(levelIds.moteseta);
+
+        if (isAali) {
+          if (!requireChecked('#id_is_grade12_graduate', 'برای دوره عالی، گزینه فارغ صنف دوازدهم الزامی است.', step)) return false;
+          if (!requireAnyChecked('#semesters-section', 'حداقل یک سمستر را انتخاب کنید.', step)) return false;
+        } else if (isEbtedai) {
+          if (!requireAnyHidden('#selected_periods_ebtedai', 'حداقل یک دوره ابتداییه را انتخاب کنید.', step)) return false;
+        } else if (isMoteseta) {
+          if (!requireAnyHidden('#selected_periods_moteseta', 'حداقل یک دوره متوسطه را انتخاب کنید.', step)) return false;
         }
       }
+
+      if (step === 4) {
+        if (!requireValue('#id_school_class', 'صنف را انتخاب کنید.', '#class_autocomplete', step)) return false;
+        if (!requireValue('#id_mobile_number', 'شماره موبایل را وارد کنید.', null, step)) return false;
+      }
+
       return true;
     }
 
