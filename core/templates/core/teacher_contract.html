@@ -367,6 +367,36 @@
         return value;
       }
 
+      function getCurrentJalaliYear() {
+        const now = new Date();
+        const [jy] = gregorianToJalali(now.getFullYear(), now.getMonth() + 1, now.getDate());
+        return toPersianDigits(jy);
+      }
+
+      function normalizeJalaliDateInput(inputEl) {
+        if (!inputEl || !inputEl.value) return;
+        const raw = toEnglishDigits(inputEl.value).trim();
+        if (!raw) return;
+        if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) return;
+        const parts = raw.split(/[\/\-]/);
+        if (parts.length !== 3) return;
+        const jy = parseInt(parts[0], 10);
+        const jm = parseInt(parts[1], 10);
+        const jd = parseInt(parts[2], 10);
+        const monthOk = jm && jm >= 1 && jm <= 12;
+        const dayOk = jd && jd >= 1 && jd <= 31;
+        if (jy && monthOk && dayOk) {
+          inputEl.value = toPersianDigits(`${jy}/${pad2(jm)}/${pad2(jd)}`);
+          return;
+        }
+        if (monthOk && dayOk) {
+          const currentYear = parseInt(toEnglishDigits(getCurrentJalaliYear()), 10);
+          if (currentYear) {
+            inputEl.value = toPersianDigits(`${currentYear}/${pad2(jm)}/${pad2(jd)}`);
+          }
+        }
+      }
+
       function setHeaderJalaliDate() {
         const dayEl = document.getElementById('header-date-day');
         const monthEl = document.getElementById('header-date-month');
@@ -407,6 +437,7 @@
         education_level: '             ',
         position: '                                 ',
         monthly_salary: '_________',
+        current_year: '      ',
       };
 
       function hasText(value) {
@@ -443,6 +474,7 @@
           education_level: normalizeValue(data.educationLevel, tokenFallbacks.education_level),
           position: getInputValue('id_position', tokenFallbacks.position, false),
           monthly_salary: getInputValue('id_monthly_salary', tokenFallbacks.monthly_salary, false),
+          current_year: normalizeValue(getCurrentJalaliYear(), tokenFallbacks.current_year),
         };
       }
 
@@ -462,6 +494,9 @@
       function updatePreview() {
         bindings.forEach(({input, output, fallback, isDate}) => {
           const inputEl = document.getElementById(input);
+          if (isDate) {
+            normalizeJalaliDateInput(inputEl);
+          }
           const value = inputEl ? inputEl.value : '';
           setPreview(output, value, fallback, isDate);
         });
