@@ -21,6 +21,10 @@ class Student(models.Model):
 	]
 	gender = models.CharField('جنسیت', max_length=10, choices=GENDER_CHOICES, default='male')
 	current_address = models.TextField('نشانی فعلی', blank=True)
+	# نشانی‌های جزئی
+	village = models.CharField('قریه', max_length=150, blank=True)
+	district = models.CharField('ولسوالی', max_length=150, blank=True)
+	area = models.CharField('ناحیه', max_length=150, blank=True)
 
 	# یک جفت تایم مشترک (تایم آغاز / تایم ختم)
 	time_start = models.TimeField('تایم آغاز', blank=True, null=True)
@@ -117,6 +121,10 @@ class Teacher(models.Model):
 	father_name = models.CharField('نام پدر', max_length=255, blank=True)
 	permanent_address = models.TextField('سکونت اصلی', blank=True)
 	current_address = models.TextField('سکونت فعلی', blank=True)
+	# نشانی‌های جزئی
+	village = models.CharField('قریه', max_length=150, blank=True)
+	district = models.CharField('ولسوالی', max_length=150, blank=True)
+	area = models.CharField('ناحیه', max_length=150, blank=True)
 	gender = models.CharField('جنسیت', max_length=10, choices=GENDER_CHOICES, default='male')
 	education_level = models.CharField('سویه تحصیلی', max_length=2, choices=EDUCATION_CHOICES, default='p')
 	id_number = models.CharField('نمبر تذکره', max_length=100, blank=True)

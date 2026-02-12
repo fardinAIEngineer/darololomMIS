@@ -89,8 +89,11 @@
         <div id="contract-preview" class="contract-paper p-8"
              data-teacher-name="{{ teacher.name|default:'' }}"
              data-father-name="{{ teacher.father_name|default:'' }}"
-             data-permanent-address="{{ teacher.permanent_address|default:'' }}"
-             data-current-address="{{ teacher.current_address|default:'' }}"
+             data-village="{{ teacher.village|default:'' }}"
+             data-district="{{ teacher.district|default:'' }}"
+             data-area="{{ teacher.area|default:'' }}"
+             data-permanent-province="{{ teacher.permanent_address|default:'' }}"
+             data-current-province="{{ teacher.current_address|default:'' }}"
              data-id-number="{{ teacher.id_number|default:'' }}"
              data-education-level="{{ teacher.get_education_level_display|default:'' }}">
           <div class="contract-header">
@@ -424,10 +427,6 @@
         return hasText(str) ? str : fallback;
       }
 
-      function splitAddress(text) {
-        const raw = text ? String(text) : '';
-        return raw.split(/[،,]/).map((part) => part.trim()).filter(Boolean);
-      }
 
       function getInputValue(inputId, fallback, isDate) {
         const inputEl = document.getElementById(inputId);
@@ -439,18 +438,16 @@
 
       function buildTokenMap() {
         const data = contractPreview ? contractPreview.dataset : {};
-        const permanentParts = splitAddress(data.permanentAddress);
-        const currentParts = splitAddress(data.currentAddress);
 
         return {
           contract_date: getInputValue('id_contract_date', tokenFallbacks.contract_date, true),
           teacher_name: normalizeValue(data.teacherName, tokenFallbacks.teacher_name),
           father_name: normalizeValue(data.fatherName, tokenFallbacks.father_name),
-          permanent_village: normalizeValue(permanentParts[0], tokenFallbacks.permanent_village),
-          permanent_district: normalizeValue(permanentParts[1], tokenFallbacks.permanent_district),
-          permanent_province: normalizeValue(permanentParts[2], tokenFallbacks.permanent_province),
-          current_area: normalizeValue(currentParts[0], tokenFallbacks.current_area),
-          current_province: normalizeValue(currentParts[1], tokenFallbacks.current_province),
+          permanent_village: normalizeValue(data.village, tokenFallbacks.permanent_village),
+          permanent_district: normalizeValue(data.district, tokenFallbacks.permanent_district),
+          permanent_province: normalizeValue(data.permanentProvince, tokenFallbacks.permanent_province),
+          current_area: normalizeValue(data.area, tokenFallbacks.current_area),
+          current_province: normalizeValue(data.currentProvince, tokenFallbacks.current_province),
           id_number: normalizeValue(data.idNumber, tokenFallbacks.id_number),
           education_level: normalizeValue(data.educationLevel, tokenFallbacks.education_level),
           position: getInputValue('id_position', tokenFallbacks.position, false),
