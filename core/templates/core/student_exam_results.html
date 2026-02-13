@@ -34,16 +34,60 @@
   }
 
   @media print {
-    body {
-      background: white;
-    }
-    .no-print {
-      display: none !important;
-    }
+    @page { size: A4 portrait; margin: 0; }
+    body { background: white; }
+    .no-print { display: none !important; }
+    body * { visibility: hidden !important; }
+    #resultSheetContent, #resultSheetContent * { visibility: visible !important; }
     #resultSheetContent {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 210mm;
+      min-height: 297mm;
+      height: 297mm;
+      margin: 0;
+      padding: 12mm;
+      box-sizing: border-box;
+      overflow: hidden;
       box-shadow: none !important;
       border: none !important;
     }
+    .result-header { margin-bottom: 12px !important; padding-bottom: 12px !important; }
+    .result-header h1 { font-size: 24px !important; }
+    .result-header h2 { font-size: 20px !important; }
+    .result-header h3 { font-size: 20px !important; margin-top: 6px !important; }
+    .sheet-badge { font-size: 12px !important; padding: 2px 8px !important; }
+    .info-panel { padding: 10px !important; margin-bottom: 12px !important; }
+    .info-panel span { font-size: 14px !important; }
+    .scores-table { margin-bottom: 12px !important; }
+    .scores-table th,
+    .scores-table td {
+      padding: 6px 8px !important;
+      font-size: 14px !important;
+    }
+    .scores-table.table-compact th,
+    .scores-table.table-compact td {
+      padding: 4px 6px !important;
+      font-size: 13px !important;
+    }
+    .scores-table.table-compact-tight th,
+    .scores-table.table-compact-tight td {
+      padding: 3px 5px !important;
+      font-size: 12px !important;
+    }
+    .scores-table.table-compact-tight .table-head th { font-size: 12px !important; }
+    .summary-section { margin-bottom: 12px !important; }
+    .summary-card,
+    .status-card { padding: 10px !important; }
+    .summary-card h4,
+    .status-card h4 { font-size: 16px !important; margin-bottom: 6px !important; }
+    .summary-card span { font-size: 14px !important; }
+    .status-value { font-size: 32px !important; }
+    .footer-signatures { margin-top: 12px !important; padding-top: 12px !important; gap: 16px !important; }
+    .footer-signatures .h-16 { height: 40px !important; }
+    .signature-title { font-size: 14px !important; }
+    #resultSheetContent { page-break-inside: avoid; }
   }
 
   .result-sheet {
@@ -140,19 +184,23 @@
 
 <div id="resultSheetContent" class="result-sheet {% if level_code == 'moteseta' %}sheet-moteseta{% elif level_code == 'ebtedai' %}sheet-ebtedai{% else %}sheet-aali{% endif %} bg-white rounded-2xl shadow-soft border border-gray-100 overflow-hidden" style="max-width: 210mm; margin: 0 auto; padding: 40px;">
   
-  <!-- Header with Logo and School Name -->
+  <!-- Header with Logos and School Name -->
   <div class="text-center mb-8 border-b-4 pb-6 result-header">
-    <div class="flex items-center justify-center gap-6 mb-4">
-      <img src="{% url 'core:logo' %}" alt="لوگو" class="w-20 h-20 object-contain" onerror="this.style.display='none';">
+    <div class="flex items-center justify-between mb-4">
+      <div class="flex items-center justify-start w-24">
+        <img src="{% url 'core:emirate_logo' %}" alt="لوگوی امارت" class="w-20 h-20 object-contain" onerror="this.style.display='none';">
+      </div>
       <div>
-        <h1 class="text-3xl font-extrabold text-gray-900" style="font-size: 32px;">دارالعلوم عالی</h1>
-        <h2 class="text-2xl font-bold text-gray-700" style="font-size: 28px;">الحاج سید منصور نادری</h2>
+        <h1 class="text-3xl font-extrabold text-gray-900" style="font-size: 28px;">دارالعلوم عالی</h1>
+        <h2 class="text-2xl font-bold text-gray-700" style="font-size: 24px;">الحاج سید منصور نادری</h2>
+        <h3 class="text-lg font-semibold text-gray-600 mt-1" style="font-size: 20px;">مدیریت تدریسی</h3>
+      </div>
+      <div class="flex items-center justify-end w-24">
+        <img src="{% url 'core:logo' %}" alt="لوگو" class="w-20 h-20 object-contain" onerror="this.style.display='none';">
       </div>
     </div>
     <h3 class="text-2xl font-bold mt-4 result-title" style="font-size: 26px;">{{ sheet_title }}</h3>
     <div class="mt-4 flex items-center justify-center gap-3">
-      <span class="sheet-badge inline-flex items-center px-4 py-1 rounded-full font-bold" style="font-size: 14px;">سطح {{ level_name }}</span>
-      <span class="sheet-badge inline-flex items-center px-4 py-1 rounded-full font-bold" style="font-size: 14px;">{{ term_label }} {{ term_value_display|default:'-' }}</span>
     </div>
   </div>
 
@@ -193,27 +241,25 @@
   </div>
 
   <!-- Scores Table -->
-  <div class="mb-8">
-    <table class="w-full border-collapse" style="border: 2px solid #1f2937;">
+  <div class="mb-8 scores-table {% if subjects_count > 12 %}table-compact{% endif %}{% if subjects_count > 18 %} table-compact-tight{% endif %}">
+    <table class="w-full border-collapse" style="border: 2px solid #1f2937; table-layout: fixed;">
       <thead>
         <tr class="table-head">
-          <th class="border border-gray-400 px-4 py-4 text-white font-bold text-center" style="font-size: 20px; border: 2px solid #1f2937;">ردیف</th>
-          <th class="border border-gray-400 px-4 py-4 text-white font-bold text-right" style="font-size: 20px; border: 2px solid #1f2937;">نام مضمون</th>
-          <th class="border border-gray-400 px-4 py-4 text-white font-bold text-center" style="font-size: 20px; border: 2px solid #1f2937;">نمره (از ۱۰۰)</th>
-          <th class="border border-gray-400 px-4 py-4 text-white font-bold text-center" style="font-size: 20px; border: 2px solid #1f2937;">وضعیت</th>
+          <th class="border border-gray-400 px-4 py-4 text-white font-bold text-right" style="font-size: 20px; border: 2px solid #1f2937; width: 60%;">نام مضمون</th>
+          <th class="border border-gray-400 px-4 py-4 text-white font-bold text-center" style="font-size: 20px; border: 2px solid #1f2937; width: 20%;">نمره (از ۱۰۰)</th>
+          <th class="border border-gray-400 px-4 py-4 text-white font-bold text-center" style="font-size: 20px; border: 2px solid #1f2937; width: 20%;">وضعیت</th>
         </tr>
       </thead>
       <tbody>
         {% for score in scores %}
         <tr class="{% if forloop.counter|divisibleby:2 %}bg-gray-50{% else %}bg-white{% endif %}">
-          <td class="border border-gray-400 px-4 py-3 text-center font-bold" style="font-size: 18px; border: 2px solid #d1d5db;">{{ forloop.counter }}</td>
           <td class="border border-gray-400 px-4 py-3 text-right font-bold" style="font-size: 18px; border: 2px solid #d1d5db;">{{ score.subject_name }}</td>
           <td class="border border-gray-400 px-4 py-3 text-center font-bold" style="font-size: 18px; border: 2px solid #d1d5db;">{{ score.score }}</td>
           <td class="border border-gray-400 px-4 py-3 text-center font-bold {% if score.status == 'کامیاب' %}text-success-700{% elif score.status == 'ناکام' %}text-danger-700{% endif %}" style="font-size: 18px; border: 2px solid #d1d5db;">{{ score.status }}</td>
         </tr>
         {% empty %}
         <tr>
-          <td colspan="4" class="border border-gray-400 px-4 py-8 text-center text-gray-500 font-bold" style="font-size: 18px; border: 2px solid #d1d5db;">هیچ نمره‌ای برای این {{ term_label }} ثبت نشده است</td>
+          <td colspan="3" class="border border-gray-400 px-4 py-8 text-center text-gray-500 font-bold" style="font-size: 18px; border: 2px solid #d1d5db;">هیچ نمره‌ای برای این {{ term_label }} ثبت نشده است</td>
         </tr>
         {% endfor %}
       </tbody>
@@ -221,8 +267,8 @@
   </div>
 
   <!-- Summary Section -->
-  <div class="grid grid-cols-2 gap-6 mb-8">
-    <div class="p-6 rounded-xl border-2 info-card">
+  <div class="grid grid-cols-2 gap-6 mb-8 summary-section">
+    <div class="p-6 rounded-xl border-2 info-card summary-card">
       <h4 class="text-xl font-bold mb-4 result-title" style="font-size: 22px;">خلاصه نتایج</h4>
       <div class="space-y-2">
         <div class="flex justify-between">
@@ -236,14 +282,18 @@
       </div>
     </div>
     
-    <div class="{% if overall_status == 'کامیاب' %}bg-success-50 border-success-200{% elif overall_status == 'ناکام' %}bg-danger-50 border-danger-200{% else %}bg-gray-50 border-gray-200{% endif %} p-6 rounded-xl border-2">
+    <div class="{% if overall_status == 'کامیاب' %}bg-success-50 border-success-200{% elif overall_status == 'ناکام' %}bg-danger-50 border-danger-200{% else %}bg-gray-50 border-gray-200{% endif %} p-6 rounded-xl border-2 status-card">
       <h4 class="text-xl font-bold mb-4 {% if overall_status == 'کامیاب' %}text-success-900{% elif overall_status == 'ناکام' %}text-danger-900{% else %}text-gray-900{% endif %}" style="font-size: 22px;">نتیجه نهایی</h4>
       <div class="text-center">
-        <div class="text-5xl font-extrabold mb-2 {% if overall_status == 'کامیاب' %}text-success-700{% elif overall_status == 'ناکام' %}text-danger-700{% else %}text-gray-700{% endif %}" style="font-size: 48px;">
+        <div class="text-5xl font-extrabold mb-2 status-value {% if overall_status == 'کامیاب' %}text-success-700{% elif overall_status == 'ناکام' %}text-danger-700{% else %}text-gray-700{% endif %}" style="font-size: 48px;">
           {{ overall_status }}
         </div>
         {% if overall_status == 'کامیاب' %}
-        <p class="text-success-700 font-bold" style="font-size: 16px;">ارتقا به {{ term_label }} بعدی</p>
+          {% if can_graduate_ebtedai %}
+          <p class="text-success-700 font-bold" style="font-size: 16px;">ارتقا به سطح بعدی</p>
+          {% else %}
+          <p class="text-success-700 font-bold" style="font-size: 16px;">ارتقا به {{ term_label }} بعدی</p>
+          {% endif %}
         {% elif overall_status == 'ناکام' %}
         <p class="text-danger-700 font-bold" style="font-size: 16px;">تکمیل امتحانات</p>
         {% endif %}
@@ -252,18 +302,18 @@
   </div>
 
   <!-- Footer Signatures -->
-  <div class="grid grid-cols-3 gap-8 mt-12 pt-6 border-t-2 border-gray-300">
+  <div class="grid grid-cols-3 gap-8 mt-12 pt-6 border-t-2 border-gray-300 footer-signatures">
     <div class="text-center">
       <div class="h-16 border-b-2 border-gray-400 mb-2"></div>
-      <p class="font-bold text-gray-700" style="font-size: 16px;">استاد مربوطه</p>
+      <p class="font-bold text-gray-700 signature-title" style="font-size: 16px;">استاد مربوطه</p>
     </div>
     <div class="text-center">
       <div class="h-16 border-b-2 border-gray-400 mb-2"></div>
-      <p class="font-bold text-gray-700" style="font-size: 16px;">مدیر تدریسی</p>
+      <p class="font-bold text-gray-700 signature-title" style="font-size: 16px;">مدیر تدریسی</p>
     </div>
     <div class="text-center">
       <div class="h-16 border-b-2 border-gray-400 mb-2"></div>
-      <p class="font-bold text-gray-700" style="font-size: 16px;">آمر دارالعلوم</p>
+      <p class="font-bold text-gray-700 signature-title" style="font-size: 16px;">آمر دارالعلوم</p>
     </div>
   </div>
 

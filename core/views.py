@@ -1286,11 +1286,11 @@ def student_exam_results(request, pk):
 	term_label = 'سمستر' if level_code == 'aali' else 'دوره'
 	term_value = latest_semester if level_code == 'aali' else latest_period
 	if level_code == 'aali':
-		sheet_title = 'پارچه امتحانات دوره عالی'
+		sheet_title = 'پارچه امتحانات سطح عالی'
 	elif level_code == 'moteseta':
-		sheet_title = 'پارچه امتحانات دوره متوسطه'
+		sheet_title = 'پارچه امتحانات سطح متوسطه'
 	elif level_code == 'ebtedai':
-		sheet_title = 'پارچه امتحانات دوره ابتداییه'
+		sheet_title = 'پارچه امتحانات سطح ابتداییه'
 	else:
 		sheet_title = 'پارچه امتحانات'
 
