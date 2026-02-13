@@ -892,7 +892,11 @@ def grade_entry(request):
 	# the semester of the SchoolClass with matching `class_name`.
 	students = []
 	for s in students_qs:
+		level_obj = s.level or (s.school_class.level if s.school_class else None)
+		level_code = level_obj.code if level_obj else ''
+		level_name = level_obj.name if level_obj else ''
 		sems = list(s.semesters.values_list('number', flat=True)) if hasattr(s, 'semesters') else []
+		periods = list(s.periods.values_list('number', flat=True)) if hasattr(s, 'periods') else []
 		# fallback: determine semester from student's school_class -> SchoolClass.semester
 		if not sems:
 			try:
@@ -901,16 +905,35 @@ def grade_entry(request):
 			except Exception:
 				# any unexpected issue -> keep sems empty
 				sems = []
+		if not periods:
+			try:
+				if s.school_class and s.school_class.period:
+					periods = [s.school_class.period.number]
+			except Exception:
+				periods = []
 		students.append({
 			'id': s.id,
 			'display': f"{s.name} ({s.father_name})",
 			'semesters': sems,
+			'periods': periods,
+			'level_code': level_code,
+			'level_name': level_name,
 			'class_name': s.school_class.name if s.school_class else ''
 		})
 
 	subjects_qs = Subject.objects.order_by('name')
-	# include semester number for each subject
-	subjects = [{'id': sub.id, 'name': sub.name, 'semester': sub.semester} for sub in subjects_qs]
+	# include semester/period/level for each subject
+	subjects = [
+		{
+			'id': sub.id,
+			'name': sub.name,
+			'semester': sub.semester,
+			'period': sub.period.number if sub.period else None,
+			'level_code': sub.level.code if sub.level else '',
+			'level_name': sub.level.name if sub.level else ''
+		}
+		for sub in subjects_qs
+	]
 
 	if request.method == 'POST':
 		student_id = request.POST.get('student_id')
@@ -975,7 +998,17 @@ def grade_entry(request):
 		messages.success(request, f'عملیات ثبت نمرات انجام شد. ایجاد: {created} — بروزرسانی: {updated} — خطاها: {errors}')
 		# Rebuild subjects list for template render (same as GET below)
 		subjects_qs = Subject.objects.order_by('name')
-		subjects = [{'id': sub.id, 'name': sub.name, 'semester': sub.semester} for sub in subjects_qs]
+		subjects = [
+			{
+				'id': sub.id,
+				'name': sub.name,
+				'semester': sub.semester,
+				'period': sub.period.number if sub.period else None,
+				'level_code': sub.level.code if sub.level else '',
+				'level_name': sub.level.name if sub.level else ''
+			}
+			for sub in subjects_qs
+		]
 		return render(request, 'core/grades_form.html', {'students': students, 'subjects': subjects, 'saved_subjects': saved_subjects, 'saved_student_id': student.id})
 
 	# GET
@@ -1026,19 +1059,45 @@ def api_class_search(request):
 
 def student_exam_results(request, pk):
 	"""Display the latest exam results for a student in a printable format."""
-	from django.db.models import Max
 	from datetime import datetime
 	
 	student = get_object_or_404(Student, pk=pk)
+	level_obj = student.level or (student.school_class.level if student.school_class else None)
 	
 	# Get the latest semester for this student
 	# First try from student's assigned semesters
 	latest_semester = None
+	latest_period = None
 	if student.semesters.exists():
 		latest_semester = student.semesters.order_by('-number').first()
 	# Fallback to class semester
 	elif student.school_class and student.school_class.semester:
 		latest_semester = student.school_class.semester
+	if student.periods.exists():
+		latest_period = student.periods.order_by('-number').first()
+	elif student.school_class and student.school_class.period:
+		latest_period = student.school_class.period
+
+	level_map = _ensure_reference_data()
+	if not level_obj:
+		if latest_period:
+			moteseta_level = level_map.get('moteseta')
+			ebtedai_level = level_map.get('ebtedai')
+			if moteseta_level and Subject.objects.filter(period=latest_period, level=moteseta_level).exists():
+				level_obj = moteseta_level
+			elif ebtedai_level and Subject.objects.filter(period=latest_period, level=ebtedai_level).exists():
+				level_obj = ebtedai_level
+			else:
+				level_obj = moteseta_level or ebtedai_level
+		elif latest_semester and not latest_period:
+			level_obj = level_map.get('aali')
+
+	if level_obj:
+		level_code = level_obj.code
+		level_name = level_obj.name
+	else:
+		level_code = 'unknown'
+		level_name = 'نامشخص'
 	
 	# Get all scores for subjects in the latest semester
 	scores = []
@@ -1046,40 +1105,70 @@ def student_exam_results(request, pk):
 	max_possible = 0
 	subjects_count = 0
 	
-	if latest_semester:
-		# Get subjects for this semester
-		subjects = Subject.objects.filter(semester=latest_semester.number).order_by('name')
-		
-		for subject in subjects:
-			# Try to get the score for this student and subject
-			try:
-				student_score = StudentScore.objects.get(student=student, subject=subject)
-				score_value = student_score.score if student_score.score is not None else 0
-			except StudentScore.DoesNotExist:
-				score_value = 0
-			
-			scores.append({
-				'subject_name': subject.name,
-				'score': score_value,
-				'status': 'کامیاب' if score_value >= 55 else 'مردود' if score_value > 0 else '-'
-			})
-			
-			if score_value > 0:
-				total_score += score_value
-				max_possible += 100
-				subjects_count += 1
+	subjects = Subject.objects.none()
+	if level_code == 'aali':
+		if latest_semester:
+			subjects = Subject.objects.filter(semester=latest_semester.number)
+		else:
+			subjects = Subject.objects.all()
+		if level_obj:
+			subjects = subjects.filter(Q(level=level_obj) | Q(level__isnull=True))
+		subjects = subjects.order_by('name')
+	elif level_code in ('moteseta', 'ebtedai'):
+		if latest_period:
+			subjects = Subject.objects.filter(period=latest_period)
+			if level_obj:
+				subjects = subjects.filter(Q(level=level_obj) | Q(level__isnull=True))
+		else:
+			subjects = Subject.objects.filter(level=level_obj) if level_obj else Subject.objects.filter(level__code=level_code)
+		subjects = subjects.order_by('name')
+	else:
+		subjects = Subject.objects.all().order_by('name')
+
+	for subject in subjects:
+		# Try to get the score for this student and subject
+		try:
+			student_score = StudentScore.objects.get(student=student, subject=subject)
+			score_value = student_score.score if student_score.score is not None else 0
+		except StudentScore.DoesNotExist:
+			score_value = 0
+
+		score_value = max(0, min(score_value, 100))
+		status = 'کامیاب' if score_value >= 50 else 'ناکام'
+
+		scores.append({
+			'subject_name': subject.name,
+			'score': score_value,
+			'status': status
+		})
+
+		total_score += score_value
+		subjects_count += 1
+		max_possible += 100
 	
 	# Calculate percentage and average
 	percentage = (total_score / max_possible * 100) if max_possible > 0 else 0
 	average = (total_score / subjects_count) if subjects_count > 0 else 0
-	overall_status = 'کامیاب' if average >= 55 and subjects_count > 0 else 'مردود' if subjects_count > 0 else 'نامشخص'
+	all_passed = all(item['score'] >= 50 for item in scores) if subjects_count > 0 else False
+	overall_status = 'کامیاب' if all_passed else 'ناکام' if subjects_count > 0 else 'نامشخص'
 	
 	# Get current date for report
 	current_date = datetime.now().strftime('%Y-%m-%d')
+	term_label = 'سمستر' if level_code == 'aali' else 'دوره'
+	term_value = latest_semester if level_code == 'aali' else latest_period
+	if level_code == 'aali':
+		sheet_title = 'پارچه امتحانات دوره عالی'
+	elif level_code == 'moteseta':
+		sheet_title = 'پارچه امتحانات دوره متوسطه'
+	elif level_code == 'ebtedai':
+		sheet_title = 'پارچه امتحانات دوره ابتداییه'
+	else:
+		sheet_title = 'پارچه امتحانات'
 	
 	context = {
 		'student': student,
 		'semester': latest_semester,
+		'period': latest_period,
 		'scores': scores,
 		'total_score': total_score,
 		'max_possible': max_possible,
@@ -1088,6 +1177,11 @@ def student_exam_results(request, pk):
 		'overall_status': overall_status,
 		'subjects_count': subjects_count,
 		'current_date': current_date,
+		'level_code': level_code,
+		'level_name': level_name,
+		'term_label': term_label,
+		'term_value': term_value,
+		'sheet_title': sheet_title,
 	}
 	
 	return render(request, 'core/student_exam_results.html', context)

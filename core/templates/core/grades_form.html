@@ -267,19 +267,24 @@
     <div>
       <label class="block text-sm font-medium text-gray-700">مضامین (ابتدا یک دانش‌آموز انتخاب کنید)</label>
       <div id="subjects-container" class="mt-2">
-        <p id="subjects-note" class="text-sm text-gray-500 mb-2">لطفاً ابتدا از فیلد "انتخاب دانش‌آموز" یک دانش‌آموز را انتخاب کنید تا مضامین مربوط به سمستر او نمایش داده شوند.</p>
+        <p id="subjects-note" class="text-sm text-gray-500 mb-2">لطفاً ابتدا از فیلد "انتخاب دانش‌آموز" یک دانش‌آموز را انتخاب کنید تا مضامین مربوط به سمستر/دوره او نمایش داده شوند.</p>
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 hidden" id="subjects-list">
           {% for sub in subjects %}
-          <div class="flex items-center gap-3 p-2 border rounded-md subject-item dark:border-slate-700 dark:bg-slate-900/40" data-sub-id="{{ sub.id }}" data-sub-semester="{{ sub.semester }}">
+          <div class="flex items-center gap-3 p-2 border rounded-md subject-item dark:border-slate-700 dark:bg-slate-900/40" data-sub-id="{{ sub.id }}" data-sub-semester="{{ sub.semester }}" data-sub-period="{{ sub.period|default:'' }}" data-sub-level="{{ sub.level_code|default:'' }}">
             <input type="checkbox" class="subject-checkbox" id="sub-{{ sub.id }}" data-sub-id="{{ sub.id }}" disabled>
-            <label for="sub-{{ sub.id }}" class="flex-1">{{ sub.name }} <span class="text-xs text-gray-400">(سمستر {{ sub.semester }})</span></label>
+            <label for="sub-{{ sub.id }}" class="flex-1">
+              {{ sub.name }}
+              <span class="text-xs text-gray-400">
+                ({% if sub.level_name %}سطح {{ sub.level_name }}{% endif %}{% if sub.level_name %} - {% endif %}{% if sub.period %}دوره {{ sub.period }}{% else %}سمستر {{ sub.semester }}{% endif %})
+              </span>
+            </label>
             <input type="number" min="0" max="100" class="score-input w-24 border rounded px-2 py-1 dark:border-slate-700" placeholder="نمره" data-sub-id="{{ sub.id }}" disabled>
           </div>
           {% empty %}
           <p class="text-sm text-gray-500">مضمون تعریف نشده است.</p>
           {% endfor %}
         </div>
-        <p id="no-subjects-message" class="text-sm text-red-500 hidden">برای این دانش‌آموز هیچ مضمونی در سمستر(ها) ثبت نشده است.</p>
+        <p id="no-subjects-message" class="text-sm text-red-500 hidden">برای این دانش‌آموز هیچ مضمونی ثبت نشده است.</p>
       </div>
     </div>
 
@@ -380,7 +385,18 @@
         meta.className = 'student-meta';
         const metaParts = [];
         if (s.class_name) metaParts.push(`صنف: ${s.class_name}`);
-        if (s.semesters && s.semesters.length) metaParts.push(`سمستر: ${s.semesters.join(', ')}`);
+        if (s.level_name) metaParts.push(`سطح: ${s.level_name}`);
+        const semList = (s.semesters && s.semesters.length) ? s.semesters.join(', ') : '';
+        const perList = (s.periods && s.periods.length) ? s.periods.join(', ') : '';
+        if (s.level_code === 'aali' && semList) {
+          metaParts.push(`سمستر: ${semList}`);
+        } else if (s.level_code && s.level_code !== 'aali' && perList) {
+          metaParts.push(`دوره: ${perList}`);
+        } else if (perList) {
+          metaParts.push(`دوره: ${perList}`);
+        } else if (semList) {
+          metaParts.push(`سمستر: ${semList}`);
+        }
         meta.textContent = metaParts.length ? metaParts.join(' • ') : 'اطلاعات تکمیلی موجود نیست';
         
         info.appendChild(name);
@@ -420,7 +436,9 @@
           // find selected student object to access semesters
           const st = students.find(x => String(x.id) === String(this.dataset.id));
           const sems = (st && st.semesters && st.semesters.length) ? st.semesters.map(Number) : [];
-          filterSubjectsBySemesters(sems);
+          const periods = (st && st.periods && st.periods.length) ? st.periods.map(Number) : [];
+        const levelCode = (st && st.level_code) ? st.level_code : '';
+        filterSubjectsForStudent({ sems, periods, levelCode });
         });
         
         suggestions.appendChild(li);
@@ -428,15 +446,18 @@
       suggestions.classList.remove('hidden');
     }
 
-    function filterSubjectsBySemesters(sems){
-      // sems: array of numbers; if empty -> student has no semesters assigned
+    function filterSubjectsForStudent({ sems, periods, levelCode }){
       const items = Array.from(document.querySelectorAll('.subject-item'));
-      // if student has no semesters, show message and keep list hidden
-      if (!sems || sems.length === 0){
+      const useSemesters = (levelCode === 'aali') || (!periods.length && sems.length);
+      const activeList = useSemesters ? sems : periods;
+      const attr = useSemesters ? 'subSemester' : 'subPeriod';
+      const label = useSemesters ? 'سمستر' : 'دوره';
+
+      if (!activeList || activeList.length === 0){
         subjectsList.classList.add('hidden');
         noSubjectsMsg.classList.remove('hidden');
+        noSubjectsMsg.textContent = `برای این دانش‌آموز هیچ مضمونی در ${label}(ها) ثبت نشده است.`;
         subjectsNote.classList.add('hidden');
-        // disable all controls
         items.forEach(it => {
           it.style.display = 'none';
           const cb = it.querySelector('.subject-checkbox');
@@ -447,24 +468,24 @@
         return;
       }
 
-      // show container and hide the instruction note
       subjectsList.classList.remove('hidden');
       subjectsNote.classList.add('hidden');
       noSubjectsMsg.classList.add('hidden');
 
       let anyVisible = false;
       items.forEach(it => {
-        const s = Number(it.dataset.subSemester || it.getAttribute('data-sub-semester'));
+        const raw = it.dataset[attr] || it.getAttribute(`data-${attr.replace(/[A-Z]/g, m => '-' + m.toLowerCase())}`);
+        const v = Number(raw);
+        const subLevel = (it.dataset.subLevel || '').trim();
         const cb = it.querySelector('.subject-checkbox');
         const si = it.querySelector('.score-input');
-        if (sems.includes(s)){
+        const levelMatch = !levelCode || (subLevel && subLevel === levelCode);
+        if (activeList.includes(v) && levelMatch){
           it.style.display = '';
           if (cb){ cb.disabled = false; }
-          // keep score input disabled until checkbox checked
           if (si){ si.disabled = true; si.value = ''; }
           anyVisible = true;
         } else {
-          // uncheck and disable inputs if hidden
           if (cb){ cb.checked = false; cb.disabled = true; }
           if (si){ si.value = ''; si.disabled = true; }
           it.style.display = 'none';
@@ -474,6 +495,7 @@
       if (!anyVisible){
         subjectsList.classList.add('hidden');
         noSubjectsMsg.classList.remove('hidden');
+        noSubjectsMsg.textContent = `برای این دانش‌آموز هیچ مضمونی در ${label}(ها) و سطح مربوطه ثبت نشده است.`;
       }
     }
 

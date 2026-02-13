@@ -45,13 +45,63 @@
       border: none !important;
     }
   }
+
+  .result-sheet {
+    --accent-strong: #1e40af;
+    --accent: #3b82f6;
+    --accent-soft: #dbeafe;
+    --accent-border: #93c5fd;
+    --accent-text: #1e3a8a;
+    --header-gradient: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
+    --sheet-soft: #f8fafc;
+  }
+  .result-sheet.sheet-moteseta {
+    --accent-strong: #166534;
+    --accent: #22c55e;
+    --accent-soft: #dcfce7;
+    --accent-border: #86efac;
+    --accent-text: #14532d;
+    --header-gradient: linear-gradient(135deg, #166534 0%, #22c55e 100%);
+    --sheet-soft: #f0fdf4;
+  }
+  .result-sheet.sheet-ebtedai {
+    --accent-strong: #92400e;
+    --accent: #f59e0b;
+    --accent-soft: #fef3c7;
+    --accent-border: #fcd34d;
+    --accent-text: #78350f;
+    --header-gradient: linear-gradient(135deg, #b45309 0%, #f59e0b 100%);
+    --sheet-soft: #fffbeb;
+  }
+  .result-sheet .result-header {
+    border-color: var(--accent-strong);
+  }
+  .result-sheet .result-title {
+    color: var(--accent-text);
+  }
+  .result-sheet .sheet-badge {
+    background: var(--accent-soft);
+    color: var(--accent-text);
+    border: 1px solid var(--accent-border);
+  }
+  .result-sheet .info-panel {
+    background: var(--sheet-soft);
+    border: 1px solid var(--accent-border);
+  }
+  .result-sheet .info-card {
+    background: var(--accent-soft);
+    border-color: var(--accent-border);
+  }
+  .result-sheet .table-head {
+    background: var(--header-gradient);
+  }
 </style>
 
 <div class="mb-6 no-print">
   <div class="flex items-center justify-between">
     <div>
       <h1 class="text-3xl font-bold text-gray-900 mb-2">نتیجه امتحانات</h1>
-      <p class="text-gray-600">نتیجه آخرین سمستر - {{ student.name }}</p>
+      <p class="text-gray-600">نتیجه آخرین {{ term_label }} ({{ level_name }}) - {{ student.name }}</p>
     </div>
     <div class="flex gap-3">
       <button onclick="window.print()" class="inline-flex items-center gap-2 bg-success-600 hover:bg-success-700 text-white px-6 py-3 rounded-xl font-medium shadow-lg hover:shadow-xl transition-all duration-200">
@@ -70,10 +120,10 @@
   </div>
 </div>
 
-<div id="resultSheetContent" class="bg-white rounded-2xl shadow-soft border border-gray-100 overflow-hidden" style="max-width: 210mm; margin: 0 auto; padding: 40px;">
+<div id="resultSheetContent" class="result-sheet {% if level_code == 'moteseta' %}sheet-moteseta{% elif level_code == 'ebtedai' %}sheet-ebtedai{% else %}sheet-aali{% endif %} bg-white rounded-2xl shadow-soft border border-gray-100 overflow-hidden" style="max-width: 210mm; margin: 0 auto; padding: 40px;">
   
   <!-- Header with Logo and School Name -->
-  <div class="text-center mb-8 border-b-4 border-primary-600 pb-6">
+  <div class="text-center mb-8 border-b-4 pb-6 result-header">
     <div class="flex items-center justify-center gap-6 mb-4">
       <img src="{% url 'core:logo' %}" alt="لوگو" class="w-20 h-20 object-contain" onerror="this.style.display='none';">
       <div>
@@ -81,11 +131,15 @@
         <h2 class="text-2xl font-bold text-gray-700" style="font-size: 28px;">الحاج سید منصور نادری</h2>
       </div>
     </div>
-    <h3 class="text-2xl font-bold text-primary-700 mt-4" style="font-size: 26px;">پارچه امتحانات</h3>
+    <h3 class="text-2xl font-bold mt-4 result-title" style="font-size: 26px;">{{ sheet_title }}</h3>
+    <div class="mt-4 flex items-center justify-center gap-3">
+      <span class="sheet-badge inline-flex items-center px-4 py-1 rounded-full font-bold" style="font-size: 14px;">سطح {{ level_name }}</span>
+      <span class="sheet-badge inline-flex items-center px-4 py-1 rounded-full font-bold" style="font-size: 14px;">{{ term_label }} {{ term_value|default:'-' }}</span>
+    </div>
   </div>
 
   <!-- Student Information -->
-  <div class="grid grid-cols-2 gap-6 mb-8 bg-gray-50 p-6 rounded-xl">
+  <div class="grid grid-cols-2 gap-6 mb-8 p-6 rounded-xl info-panel">
     <div class="space-y-3">
       <div class="flex items-start gap-2">
         <span class="font-bold text-gray-700 min-w-[120px]" style="font-size: 18px;">نام دانش‌آموز:</span>
@@ -99,11 +153,15 @@
         <span class="font-bold text-gray-700 min-w-[120px]" style="font-size: 18px;">صنف:</span>
         <span class="font-bold text-gray-900" style="font-size: 18px;">{% if student.school_class %}{{ student.school_class.name }}{% else %}-{% endif %}</span>
       </div>
+      <div class="flex items-start gap-2">
+        <span class="font-bold text-gray-700 min-w-[120px]" style="font-size: 18px;">سطح آموزشی:</span>
+        <span class="font-bold text-gray-900" style="font-size: 18px;">{{ level_name }}</span>
+      </div>
     </div>
     <div class="space-y-3">
       <div class="flex items-start gap-2">
-        <span class="font-bold text-gray-700 min-w-[120px]" style="font-size: 18px;">سمستر:</span>
-        <span class="font-bold text-gray-900" style="font-size: 18px;">{% if semester %}{{ semester }}{% else %}-{% endif %}</span>
+        <span class="font-bold text-gray-700 min-w-[120px]" style="font-size: 18px;">{{ term_label }}:</span>
+        <span class="font-bold text-gray-900" style="font-size: 18px;">{% if term_value %}{{ term_value }}{% else %}-{% endif %}</span>
       </div>
       <div class="flex items-start gap-2">
         <span class="font-bold text-gray-700 min-w-[120px]" style="font-size: 18px;">تاریخ:</span>
@@ -120,7 +178,7 @@
   <div class="mb-8">
     <table class="w-full border-collapse" style="border: 2px solid #1f2937;">
       <thead>
-        <tr style="background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);">
+        <tr class="table-head">
           <th class="border border-gray-400 px-4 py-4 text-white font-bold text-center" style="font-size: 20px; border: 2px solid #1f2937;">ردیف</th>
           <th class="border border-gray-400 px-4 py-4 text-white font-bold text-right" style="font-size: 20px; border: 2px solid #1f2937;">نام مضمون</th>
           <th class="border border-gray-400 px-4 py-4 text-white font-bold text-center" style="font-size: 20px; border: 2px solid #1f2937;">نمره (از ۱۰۰)</th>
@@ -137,7 +195,7 @@
         </tr>
         {% empty %}
         <tr>
-          <td colspan="4" class="border border-gray-400 px-4 py-8 text-center text-gray-500 font-bold" style="font-size: 18px; border: 2px solid #d1d5db;">هیچ نمره‌ای برای این سمستر ثبت نشده است</td>
+          <td colspan="4" class="border border-gray-400 px-4 py-8 text-center text-gray-500 font-bold" style="font-size: 18px; border: 2px solid #d1d5db;">هیچ نمره‌ای برای این {{ term_label }} ثبت نشده است</td>
         </tr>
         {% endfor %}
       </tbody>
@@ -146,8 +204,8 @@
 
   <!-- Summary Section -->
   <div class="grid grid-cols-2 gap-6 mb-8">
-    <div class="bg-primary-50 p-6 rounded-xl border-2 border-primary-200">
-      <h4 class="text-xl font-bold text-primary-900 mb-4" style="font-size: 22px;">خلاصه نتایج</h4>
+    <div class="p-6 rounded-xl border-2 info-card">
+      <h4 class="text-xl font-bold mb-4 result-title" style="font-size: 22px;">خلاصه نتایج</h4>
       <div class="space-y-2">
         <div class="flex justify-between">
           <span class="font-bold text-gray-700" style="font-size: 18px;">مجموع نمرات:</span>
@@ -156,10 +214,6 @@
         <div class="flex justify-between">
           <span class="font-bold text-gray-700" style="font-size: 18px;">فیصدی:</span>
           <span class="font-bold text-gray-900" style="font-size: 18px;">{{ percentage }}%</span>
-        </div>
-        <div class="flex justify-between">
-          <span class="font-bold text-gray-700" style="font-size: 18px;">معدل:</span>
-          <span class="font-bold text-gray-900" style="font-size: 18px;">{{ average }}</span>
         </div>
       </div>
     </div>
@@ -171,7 +225,7 @@
           {{ overall_status }}
         </div>
         {% if overall_status == 'کامیاب' %}
-        <p class="text-success-700 font-bold" style="font-size: 16px;">ارتقا به سمستر بعدی</p>
+        <p class="text-success-700 font-bold" style="font-size: 16px;">ارتقا به {{ term_label }} بعدی</p>
         {% elif overall_status == 'ناکام' %}
         <p class="text-danger-700 font-bold" style="font-size: 16px;">تکمیل امتحانات</p>
         {% endif %}
@@ -198,7 +252,7 @@
   <!-- Address Footer -->
   <div class="text-center mt-8 pt-6 border-t-2 border-gray-300">
     <p class="text-gray-600 font-bold" style="font-size: 14px;">چهارراهی پروژه تایمنی، جوار مسجد جامع الحاج سید منصور نادری</p>
-    <p class="text-gray-600 font-bold mt-1" style="font-size: 14px;">تلفن تماس: ۰۷۰۰۰۰۰۰۰۰</p>
+    <p class="text-gray-600 font-bold mt-1" style="font-size: 14px;">تلفن تماس: {{ student.mobile_number|default:'-' }}</p>
   </div>
 
 </div>
