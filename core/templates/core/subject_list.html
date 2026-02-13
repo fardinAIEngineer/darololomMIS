@@ -21,15 +21,15 @@
   <!-- Level Tabs -->
   <div class="mb-4">
     <div class="inline-flex rounded-xl border border-gray-200 bg-white p-1 shadow-sm">
-      <a href="?level=aali{% if q %}&q={{ q }}{% endif %}"
+      <a href="?level=aali{% if q %}&q={{ q }}{% endif %}&page_size={{ page_size }}"
          class="px-4 py-2 rounded-lg text-sm font-medium transition-colors {% if selected_level == 'aali' %}bg-primary-600 text-white{% else %}text-gray-700 hover:bg-gray-100{% endif %}">
         عالی
       </a>
-      <a href="?level=moteseta{% if q %}&q={{ q }}{% endif %}"
+      <a href="?level=moteseta{% if q %}&q={{ q }}{% endif %}&page_size={{ page_size }}"
          class="px-4 py-2 rounded-lg text-sm font-medium transition-colors {% if selected_level == 'moteseta' %}bg-primary-600 text-white{% else %}text-gray-700 hover:bg-gray-100{% endif %}">
         متوسطه
       </a>
-      <a href="?level=ebtedai{% if q %}&q={{ q }}{% endif %}"
+      <a href="?level=ebtedai{% if q %}&q={{ q }}{% endif %}&page_size={{ page_size }}"
          class="px-4 py-2 rounded-lg text-sm font-medium transition-colors {% if selected_level == 'ebtedai' %}bg-primary-600 text-white{% else %}text-gray-700 hover:bg-gray-100{% endif %}">
         ابتداییه
       </a>
@@ -39,15 +39,25 @@
   <div class="bg-white rounded-2xl shadow-soft border border-gray-100 overflow-hidden">
     <!-- Search Bar -->
     <div class="p-6 border-b border-gray-100 bg-gray-50/50">
-      <form method="get" class="flex gap-3">
+      <form method="get" class="flex flex-wrap gap-3 items-center">
         <input type="hidden" name="level" value="{{ selected_level }}">
-        <div class="flex-1 relative">
+        <div class="flex-1 relative min-w-[240px]">
           <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
             <svg class="w-5 h-5 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
               <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd"/>
             </svg>
           </div>
           <input type="text" name="q" value="{{ q }}" placeholder="جستجو توسط نام مضمون..." class="block w-full pr-10 pl-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors">
+        </div>
+        <div class="flex items-center gap-2">
+          <label for="subjectPageSize" class="text-sm font-medium text-gray-600">نمایش</label>
+          <select id="subjectPageSize" name="page_size" class="border border-gray-300 rounded-xl px-3 py-2.5 bg-white text-sm font-medium text-gray-700 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors" onchange="this.form.submit()">
+            <option value="10" {% if page_size == 10 %}selected{% endif %}>10</option>
+            <option value="20" {% if page_size == 20 %}selected{% endif %}>20</option>
+            <option value="50" {% if page_size == 50 %}selected{% endif %}>50</option>
+            <option value="100" {% if page_size == 100 %}selected{% endif %}>100</option>
+          </select>
+          <span class="text-sm text-gray-500">در صفحه</span>
         </div>
         <button type="submit" class="inline-flex items-center gap-2 bg-primary-600 hover:bg-primary-700 text-white px-6 py-3 rounded-xl font-medium transition-all duration-200">
           <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
@@ -131,7 +141,7 @@
       <nav class="flex items-center justify-between">
         <div class="flex-1 flex justify-start">
           {% if page_obj.has_previous %}
-            <a href="?page={{ page_obj.previous_page_number }}&q={{ q }}&level={{ selected_level }}" class="inline-flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors">
+            <a href="?page={{ page_obj.previous_page_number }}&q={{ q }}&level={{ selected_level }}&page_size={{ page_size }}" class="inline-flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors">
               <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                 <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd"/>
               </svg>
@@ -146,7 +156,7 @@
         
         <div class="flex-1 flex justify-end">
           {% if page_obj.has_next %}
-            <a href="?page={{ page_obj.next_page_number }}&q={{ q }}&level={{ selected_level }}" class="inline-flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors">
+            <a href="?page={{ page_obj.next_page_number }}&q={{ q }}&level={{ selected_level }}&page_size={{ page_size }}" class="inline-flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors">
               بعدی
               <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                 <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"/>

@@ -104,12 +104,20 @@ def student_create(request):
 
 
 def student_list(request):
-	"""نمایش لیست دانش‌آموزان با قابلیت جستجو و صفحه‌بندی (20 در هر صفحه)."""
+	"""نمایش لیست دانش‌آموزان با قابلیت جستجو و صفحه‌بندی."""
 	level_map = _ensure_reference_data()
 	level_param = request.GET.get('level', '').strip()
 	if level_param not in level_map:
 		level_param = 'aali'
 	q = request.GET.get('q', '').strip()
+	page_size_raw = request.GET.get('page_size', '20')
+	allowed_page_sizes = {10, 20, 50, 100}
+	try:
+		page_size = int(page_size_raw)
+	except (TypeError, ValueError):
+		page_size = 20
+	if page_size not in allowed_page_sizes:
+		page_size = 20
 	students = Student.objects.all().order_by('-created_at')
 	if level_param in level_map:
 		level_obj = level_map[level_param]
@@ -125,7 +133,7 @@ def student_list(request):
 		Prefetch('behavior_entries', queryset=StudentBehavior.objects.order_by('-created_at'))
 	)
 
-	paginator = Paginator(students, 10)
+	paginator = Paginator(students, page_size)
 	page_number = request.GET.get('page')
 	page_obj = paginator.get_page(page_number)
 
@@ -133,6 +141,7 @@ def student_list(request):
 		'q': q,
 		'page_obj': page_obj,
 		'selected_level': level_param,
+		'page_size': page_size,
 	}
 	return render(request, 'core/student_list.html', context)
 
@@ -140,6 +149,14 @@ def student_list(request):
 def teacher_list(request):
 	"""نمایش لیست اساتید مشابه لیست دانش‌آموزان با جستجو و صفحه‌بندی."""
 	q = request.GET.get('q', '').strip()
+	page_size_raw = request.GET.get('page_size', '20')
+	allowed_page_sizes = {10, 20, 50, 100}
+	try:
+		page_size = int(page_size_raw)
+	except (TypeError, ValueError):
+		page_size = 20
+	if page_size not in allowed_page_sizes:
+		page_size = 20
 	teachers = Teacher.objects.all().order_by('-created_at')
 	if q:
 		teachers = teachers.filter(
@@ -152,13 +169,14 @@ def teacher_list(request):
 		Prefetch('behavior_entries', queryset=TeacherBehavior.objects.order_by('-created_at'))
 	)
 
-	paginator = Paginator(teachers, 20)
+	paginator = Paginator(teachers, page_size)
 	page_number = request.GET.get('page')
 	page_obj = paginator.get_page(page_number)
 
 	context = {
 		'q': q,
 		'page_obj': page_obj,
+		'page_size': page_size,
 	}
 	return render(request, 'core/teacher_list.html', context)
 
@@ -545,15 +563,20 @@ def emirate_logo(request):
 
 
 def subject_list(request):
-	"""Display list of subjects with search and pagination similar to students list.
-
-	Supports simple name search via ?q= and pagination (20 per page).
-	"""
+	"""Display list of subjects with search and pagination similar to students list."""
 	level_map = _ensure_reference_data()
 	level_param = request.GET.get('level', '').strip()
 	if level_param not in level_map:
 		level_param = 'aali'
 	q = request.GET.get('q', '').strip()
+	page_size_raw = request.GET.get('page_size', '20')
+	allowed_page_sizes = {10, 20, 50, 100}
+	try:
+		page_size = int(page_size_raw)
+	except (TypeError, ValueError):
+		page_size = 20
+	if page_size not in allowed_page_sizes:
+		page_size = 20
 	subjects = Subject.objects.all().order_by('-created_at')
 	if level_param in level_map:
 		level_obj = level_map[level_param]
@@ -564,7 +587,7 @@ def subject_list(request):
 	if q:
 		subjects = subjects.filter(name__icontains=q)
 
-	paginator = Paginator(subjects, 20)
+	paginator = Paginator(subjects, page_size)
 	page_number = request.GET.get('page')
 	page_obj = paginator.get_page(page_number)
 
@@ -572,6 +595,7 @@ def subject_list(request):
 		'q': q,
 		'page_obj': page_obj,
 		'selected_level': level_param,
+		'page_size': page_size,
 	}
 	return render(request, 'core/subject_list.html', context)
 
@@ -628,13 +652,21 @@ def classes_list(request):
 	if level_param not in level_map:
 		level_param = 'aali'
 	q = request.GET.get('q', '').strip()
+	page_size_raw = request.GET.get('page_size', '20')
+	allowed_page_sizes = {10, 20, 50, 100}
+	try:
+		page_size = int(page_size_raw)
+	except (TypeError, ValueError):
+		page_size = 20
+	if page_size not in allowed_page_sizes:
+		page_size = 20
 	classes = SchoolClass.objects.all().order_by('-created_at')
 	if level_param in level_map:
 		classes = classes.filter(level=level_map[level_param])
 	if q:
 		classes = classes.filter(name__icontains=q)
 
-	paginator = Paginator(classes, 20)
+	paginator = Paginator(classes, page_size)
 	page_number = request.GET.get('page')
 	page_obj = paginator.get_page(page_number)
 
@@ -642,6 +674,7 @@ def classes_list(request):
 		'q': q,
 		'page_obj': page_obj,
 		'selected_level': level_param,
+		'page_size': page_size,
 	}
 	return render(request, 'core/classes_list.html', context)
 
