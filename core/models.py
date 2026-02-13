@@ -48,6 +48,8 @@ class Student(models.Model):
 	is_grade12_graduate = models.BooleanField('فارغ صنف دوازدهم', default=False)
 	# فارغ از دوره/سمستر در دارالعلوم
 	is_graduated = models.BooleanField('فارغ', default=False)
+	# شماره سرتفیکت (برای تصدیق ابتداییه)
+	certificate_number = models.CharField('شماره سرتفیکت', max_length=50, blank=True, null=True, unique=True)
 	# دوره‌ها (برای ابتداییه و متوسطه)
 	periods = models.ManyToManyField('CoursePeriod', verbose_name='دوره‌ها', blank=True)
 

@@ -7,6 +7,7 @@ from django.http import FileResponse, Http404, JsonResponse
 from django.conf import settings
 from django.views.decorators.http import require_POST
 import os
+import secrets
 from .models import Student, SchoolClass, Subject, Teacher, StudyLevel, CoursePeriod, Semester, TeacherContract
 from .models import StudentBehavior, TeacherBehavior
 from .forms import StudentForm, SchoolClassForm, SubjectForm, TeacherForm, TeacherContractForm
@@ -1325,6 +1326,14 @@ def student_certificate_print(request, pk):
 	if not can_graduate:
 		messages.error(request, 'شرایط چاپ سرتفیکت ابتداییه تکمیل نیست.')
 		return redirect(reverse('core:student_exam_results', args=[pk]))
+
+	if not student.certificate_number:
+		for _ in range(20):
+			candidate = f"cert-primary-{secrets.randbelow(10**8):08d}"
+			if not Student.objects.filter(certificate_number=candidate).exists():
+				student.certificate_number = candidate
+				student.save(update_fields=['certificate_number'])
+				break
 
 	today = datetime.now()
 	jy, jm, jd = _gregorian_to_jalali(today.year, today.month, today.day)

@@ -110,17 +110,21 @@
         </div>
         <div class="flex flex-col items-center">
           <img src="{% url 'core:logo' %}" alt="لوگو" class="w-20 h-20 object-contain" onerror="this.style.display='none';">
-          <span class="mt-2 text-sm font-bold text-gray-700">شماره سرتفیکت: {{ student.pk }}</span>
+          <span class="mt-2 text-sm font-bold text-gray-700">شماره سرتفیکت: {{ student.certificate_number|default:'-' }}</span>
         </div>
       </div>
 
       <div class="text-center mb-8"></div>
 
       <div class="bg-white/80 p-6 rounded-xl border border-amber-200 mb-6">
-        <p class="text-lg font-bold text-gray-900 leading-10" style="font-size: 26px;">
-          این تصدیق به نام شاگرد ابتداییه <span class="text-amber-700">{{ student.name }}</span>
-          فرزند شاگرد ابتداییه <span class="text-amber-700">{{ student.father_name|default:'-' }}</span>
-          صادر می‌گردد که با موفقیت دوره ابتداییه را به پایان رسانیده و شایسته ارتقا می‌باشد.
+        <p class="text-lg font-bold text-gray-900 leading-10" style="font-size: 24px;">
+          این تصدیق به نام <span class="text-amber-700">{{ student.name }}</span> فرزند <span class="text-amber-700">{{ student.father_name|default:'-' }}</span> با نمبر تذکره <span class="text-amber-700">{{ student.id_number|default:'-' }}</span> صادر می‌گردد.
+          <br>
+          موصوف/موصوفه با زحمتِ پیگیر، نظم تعلیمی و اخلاق نیکو، دوره ابتداییه را به موفقیت به پایان رسانیده است.
+          <br>
+          اداره دارالعلوم مراتب تشویق و تمجید خویش را تقدیم نموده و برای وی در مراحل بعدی توفیقات بیشتر آرزو می‌نماید.
+          <br>
+          این تصدیق به منظور ثبت و تأیید فراغت و شایستگی ارتقا به سطح بالاتر صادر گردیده است.
         </p>
       </div>
 
@@ -143,7 +147,6 @@
 
       <div class="text-center mt-6 pt-6 border-t-2 border-amber-200">
         <p class="text-gray-600 font-bold" style="font-size: 14px;">چهارراهی پروژه تایمنی، جوار مسجد جامع الحاج سید منصور نادری</p>
-        <p class="text-gray-600 font-bold mt-1" style="font-size: 14px;">تلفن تماس: {{ student.mobile_number|default:'-' }}</p>
       </div>
     </div>
   </div>
