@@ -6,8 +6,11 @@ from django.contrib import messages
 from django.http import FileResponse, Http404, JsonResponse
 from django.conf import settings
 from django.views.decorators.http import require_POST
+import base64
+import io
 import os
 import secrets
+import qrcode
 from .models import Student, SchoolClass, Subject, Teacher, StudyLevel, CoursePeriod, Semester, TeacherContract
 from .models import StudentBehavior, TeacherBehavior
 from .forms import StudentForm, SchoolClassForm, SubjectForm, TeacherForm, TeacherContractForm
@@ -1335,6 +1338,13 @@ def student_certificate_print(request, pk):
 				student.save(update_fields=['certificate_number'])
 				break
 
+	qr_payload = student.certificate_number or ''
+	qr_image = qrcode.make(qr_payload)
+	qr_buffer = io.BytesIO()
+	qr_image.save(qr_buffer, format='PNG')
+	qr_base64 = base64.b64encode(qr_buffer.getvalue()).decode('ascii')
+	qr_data_uri = f"data:image/png;base64,{qr_base64}"
+
 	today = datetime.now()
 	jy, jm, jd = _gregorian_to_jalali(today.year, today.month, today.day)
 	current_date = f"{jy:04d}/{jm:02d}/{jd:02d}"
@@ -1342,6 +1352,7 @@ def student_certificate_print(request, pk):
 		'student': student,
 		'period': latest_period,
 		'current_date': current_date,
+		'qr_code_data_uri': qr_data_uri,
 	}
 	return render(request, 'core/student_certificate.html', context)
 
