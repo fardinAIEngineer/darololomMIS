@@ -143,3 +143,6 @@ secrets.py
 # Temporary files
 tmp_*
 *.tmp
+
+# Offline Docker package
+darololommis-offline.tar
