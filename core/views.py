@@ -171,7 +171,13 @@ def teacher_list(request):
 		merit_count=Count('behavior_entries', filter=Q(behavior_entries__entry_type='merit'), distinct=True),
 	)
 	teachers = teachers.prefetch_related(
-		Prefetch('behavior_entries', queryset=TeacherBehavior.objects.order_by('-created_at'))
+		Prefetch('behavior_entries', queryset=TeacherBehavior.objects.order_by('-created_at')),
+		'levels',
+		'classes',
+		'subjects',
+		'semesters',
+		'periods',
+		'contract',
 	)
 
 	paginator = Paginator(teachers, page_size)

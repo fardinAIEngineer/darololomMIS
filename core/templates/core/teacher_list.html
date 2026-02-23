@@ -113,6 +113,13 @@
                 پلان درسی
               </button>
 
+              <button type="button" data-teacher-id="{{ teacher.pk }}" class="btn-teacher-details inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 shadow-sm hover:shadow">
+                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd" d="M18 10A8 8 0 114 4.5a8 8 0 0114 5.5zM9 8a1 1 0 112 0 1 1 0 01-2 0zm2 3a1 1 0 10-2 0v2a1 1 0 002 0v-2z" clip-rule="evenodd"/>
+                </svg>
+                معلومات مکمل
+              </button>
+
               {% if teacher.merit_count >= 3 %}
               <a href="{% url 'core:teacher_appreciation_print' teacher.pk %}" target="_blank" class="inline-flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 shadow-sm hover:shadow">
                 <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
@@ -198,6 +205,61 @@
       </nav>
     </div>
     {% endif %}
+  </div>
+
+  <!-- Teacher Details Modal -->
+  <div id="teacherDetailsModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/45 backdrop-blur-md">
+    <div class="teacher-details-modal-panel w-full max-w-4xl rounded-2xl border border-white/45 shadow-2xl overflow-hidden animate-slide-up">
+      <div class="teacher-details-modal-head flex items-center justify-between px-6 py-4">
+        <div>
+          <h3 class="text-xl font-black text-slate-900">معلومات مکمل استاد</h3>
+          <p class="text-sm text-slate-600">نمایش جزئیات کامل ثبت‌شده</p>
+        </div>
+        <button type="button" id="teacherDetailsCloseBtn" class="p-2 rounded-lg text-slate-600 hover:bg-slate-200/70 transition-colors">
+          <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
+          </svg>
+        </button>
+      </div>
+
+      <div class="teacher-details-modal-body px-6 pb-6 pt-4">
+        <div class="teacher-details-top mb-5">
+          <div id="teacherDetailsPhoto" class="teacher-details-photo">
+            <svg class="w-12 h-12 text-slate-400" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"/>
+            </svg>
+          </div>
+          <div class="teacher-details-title-wrap">
+            <div id="teacherDetailsName" class="teacher-details-title">—</div>
+            <div id="teacherDetailsSubtitle" class="teacher-details-subtitle">—</div>
+          </div>
+        </div>
+
+        <div class="teacher-details-tabs" role="tablist" aria-label="بخش‌های معلومات استاد">
+          <button type="button" class="teacher-details-tab active" data-teacher-details-tab="identity" aria-selected="true">
+            معلومات هویتی
+          </button>
+          <button type="button" class="teacher-details-tab" data-teacher-details-tab="academic" aria-selected="false">
+            معلومات آموزشی
+          </button>
+          <button type="button" class="teacher-details-tab" data-teacher-details-tab="address" aria-selected="false">
+            آدرس و سایر
+          </button>
+        </div>
+
+        <div class="teacher-details-panels">
+          <div class="teacher-details-panel" data-teacher-details-panel="identity">
+            <div id="teacherDetailsGridIdentity" class="teacher-details-grid"></div>
+          </div>
+          <div class="teacher-details-panel hidden" data-teacher-details-panel="academic">
+            <div id="teacherDetailsGridAcademic" class="teacher-details-grid"></div>
+          </div>
+          <div class="teacher-details-panel hidden" data-teacher-details-panel="address">
+            <div id="teacherDetailsGridAddress" class="teacher-details-grid"></div>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 
   <!-- Behavior Modal -->
@@ -318,7 +380,29 @@
         {
           "id": {{ teacher.pk }},
           "name": "{{ teacher.name|escapejs }}",
+          "father_name": "{{ teacher.father_name|default:'-'|escapejs }}",
+          "gender": "{{ teacher.get_gender_display|default:'-'|escapejs }}",
+          "birth_date": "{{ teacher.birth_date|date:'Y-m-d'|default:'-'|escapejs }}",
+          "id_number": "{{ teacher.id_number|default:'-'|escapejs }}",
+          "education_level": "{{ teacher.get_education_level_display|default:'-'|escapejs }}",
+          "area": "{{ teacher.area|default:'-'|escapejs }}",
+          "village": "{{ teacher.village|default:'-'|escapejs }}",
+          "district": "{{ teacher.district|default:'-'|escapejs }}",
+          "current_address": "{{ teacher.current_address|default:'-'|escapejs }}",
+          "permanent_address": "{{ teacher.permanent_address|default:'-'|escapejs }}",
+          "levels_display": "{% for level in teacher.levels.all %}{{ level.name|escapejs }}{% if not forloop.last %}، {% endif %}{% empty %}-{% endfor %}",
+          "classes_display": "{% for klass in teacher.classes.all %}{{ klass.name|escapejs }}{% if not forloop.last %}، {% endif %}{% empty %}-{% endfor %}",
+          "subjects_display": "{% for subject in teacher.subjects.all %}{{ subject.name|escapejs }}{% if not forloop.last %}، {% endif %}{% empty %}-{% endfor %}",
+          "semesters_display": "{{ teacher.get_persian_semesters|default:'-'|escapejs }}",
+          "periods_display": "{% for p in teacher.periods.all %}{{ p|escapejs }}{% if not forloop.last %}، {% endif %}{% empty %}-{% endfor %}",
+          "image_url": "{% if teacher.image %}{{ teacher.image.url|escapejs }}{% endif %}",
+          "created_at": "{{ teacher.created_at|date:'Y-m-d H:i'|escapejs }}",
           "plan_file_url": "{% if teacher.plan_file %}{{ teacher.plan_file.url|escapejs }}{% endif %}",
+          "education_document_url": "{% if teacher.education_document %}{{ teacher.education_document.url|escapejs }}{% endif %}",
+          "experience_document_url": "{% if teacher.experience_document %}{{ teacher.experience_document.url|escapejs }}{% endif %}",
+          "contract_number": "{% if teacher.contract %}{{ teacher.contract.contract_number|default:'-'|escapejs }}{% else %}-{% endif %}",
+          "contract_date": "{% if teacher.contract and teacher.contract.contract_date %}{{ teacher.contract.contract_date|date:'Y-m-d'|escapejs }}{% else %}-{% endif %}",
+          "signed_contract_url": "{% if teacher.contract and teacher.contract.signed_file %}{{ teacher.contract.signed_file.url|escapejs }}{% endif %}",
           "behavior_entries": [
             {% for entry in teacher.behavior_entries.all %}
               {
@@ -333,6 +417,169 @@
         }{% if not forloop.last %},{% endif %}
       {% endfor %}
     ]
+  </script>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      const detailsModal = document.getElementById('teacherDetailsModal');
+      const detailsCloseBtn = document.getElementById('teacherDetailsCloseBtn');
+      const detailsName = document.getElementById('teacherDetailsName');
+      const detailsSubtitle = document.getElementById('teacherDetailsSubtitle');
+      const detailsPhoto = document.getElementById('teacherDetailsPhoto');
+      const detailsGridIdentity = document.getElementById('teacherDetailsGridIdentity');
+      const detailsGridAcademic = document.getElementById('teacherDetailsGridAcademic');
+      const detailsGridAddress = document.getElementById('teacherDetailsGridAddress');
+      const detailsTabButtons = detailsModal ? detailsModal.querySelectorAll('[data-teacher-details-tab]') : [];
+      const detailsPanels = detailsModal ? detailsModal.querySelectorAll('[data-teacher-details-panel]') : [];
+      const openButtons = document.querySelectorAll('.btn-teacher-details');
+
+      if (!detailsModal || !detailsGridIdentity || !detailsGridAcademic || !detailsGridAddress) return;
+
+      let teachersData = Array.isArray(window.teachersData) ? window.teachersData : [];
+      if (!teachersData.length) {
+        try {
+          const raw = document.getElementById('teachersData');
+          teachersData = raw ? JSON.parse(raw.textContent) : [];
+          window.teachersData = teachersData;
+        } catch (e) {
+          console.error('Failed to parse teachers data', e);
+          teachersData = [];
+          window.teachersData = [];
+        }
+      }
+
+      function escapeHtml(value) {
+        return String(value || '').replace(/[&<>"']/g, function(char) {
+          const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
+          return map[char];
+        });
+      }
+
+      function valueOrDash(value) {
+        if (value === null || value === undefined) return '—';
+        const trimmed = String(value).trim();
+        return trimmed ? trimmed : '—';
+      }
+
+      function renderGridRows(container, rows) {
+        container.innerHTML = rows.map(function(item) {
+          return (
+            '<div class="teacher-details-item">' +
+              '<div class="teacher-details-key">' + escapeHtml(item[0]) + '</div>' +
+              '<div class="teacher-details-value">' + (item[2] ? item[1] : escapeHtml(valueOrDash(item[1]))) + '</div>' +
+            '</div>'
+          );
+        }).join('');
+      }
+
+      function setActiveDetailsTab(tabName) {
+        detailsTabButtons.forEach(function(btn) {
+          const isActive = btn.getAttribute('data-teacher-details-tab') === tabName;
+          btn.classList.toggle('active', isActive);
+          btn.setAttribute('aria-selected', isActive ? 'true' : 'false');
+        });
+        detailsPanels.forEach(function(panel) {
+          const isActive = panel.getAttribute('data-teacher-details-panel') === tabName;
+          panel.classList.toggle('hidden', !isActive);
+        });
+      }
+
+      function renderDetails(teacher) {
+        detailsName.textContent = valueOrDash(teacher.name);
+        detailsSubtitle.textContent = `سطوح: ${valueOrDash(teacher.levels_display)} | سمسترها: ${valueOrDash(teacher.semesters_display)}`;
+
+        if (teacher.image_url) {
+          detailsPhoto.innerHTML = `<img src="${escapeHtml(teacher.image_url)}" alt="${escapeHtml(teacher.name)}" class="teacher-details-photo-image">`;
+        } else {
+          detailsPhoto.innerHTML = '<svg class="w-12 h-12 text-slate-400" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"/></svg>';
+        }
+
+        const identityRows = [
+          ['نام و تخلص', teacher.name],
+          ['نام پدر', teacher.father_name],
+          ['جنسیت', teacher.gender],
+          ['تاریخ تولد', teacher.birth_date],
+          ['نمبر تذکره', teacher.id_number],
+          ['سویه تحصیلی', teacher.education_level],
+          ['تاریخ ثبت', teacher.created_at],
+        ];
+
+        const academicRows = [
+          ['سطوح تدریس', teacher.levels_display],
+          ['صنوف', teacher.classes_display],
+          ['مضامین', teacher.subjects_display],
+          ['سمسترها', teacher.semesters_display],
+          ['دوره‌ها', teacher.periods_display],
+          ['سویه تحصیلی', teacher.education_level],
+          ['شماره قرارداد', teacher.contract_number],
+          ['تاریخ قرارداد', teacher.contract_date],
+        ];
+
+        const addressRows = [
+          ['ناحیه', teacher.area],
+          ['قریه', teacher.village],
+          ['ولسوالی', teacher.district],
+          ['سکونت فعلی', teacher.current_address],
+          ['سکونت اصلی', teacher.permanent_address],
+          ['پلان درسی', teacher.plan_file_url ? '<a href="' + escapeHtml(teacher.plan_file_url) + '" target="_blank" class="teacher-details-link">مشاهده فایل</a>' : 'ندارد', true],
+          ['اسناد تحصیلی', teacher.education_document_url ? '<a href="' + escapeHtml(teacher.education_document_url) + '" target="_blank" class="teacher-details-link">مشاهده فایل</a>' : 'ندارد', true],
+          ['اسناد تجربه کاری', teacher.experience_document_url ? '<a href="' + escapeHtml(teacher.experience_document_url) + '" target="_blank" class="teacher-details-link">مشاهده فایل</a>' : 'ندارد', true],
+          ['قرارداد امضاشده', teacher.signed_contract_url ? '<a href="' + escapeHtml(teacher.signed_contract_url) + '" target="_blank" class="teacher-details-link">مشاهده فایل</a>' : 'ندارد', true],
+        ];
+
+        renderGridRows(detailsGridIdentity, identityRows);
+        renderGridRows(detailsGridAcademic, academicRows);
+        renderGridRows(detailsGridAddress, addressRows);
+        setActiveDetailsTab('identity');
+      }
+
+      function openDetails(teacherId) {
+        const idNum = parseInt(teacherId, 10);
+        const teacher = Array.isArray(window.teachersData)
+          ? window.teachersData.find(function(item) { return item.id === idNum; })
+          : null;
+        if (!teacher) {
+          alert('اطلاعات استاد یافت نشد.');
+          return;
+        }
+        renderDetails(teacher);
+        detailsModal.classList.remove('hidden');
+        document.body.style.overflow = 'hidden';
+      }
+
+      function closeDetails() {
+        detailsModal.classList.add('hidden');
+        document.body.style.overflow = 'auto';
+      }
+
+      openButtons.forEach(function(button) {
+        button.addEventListener('click', function() {
+          openDetails(this.getAttribute('data-teacher-id'));
+        });
+      });
+
+      detailsTabButtons.forEach(function(button) {
+        button.addEventListener('click', function() {
+          setActiveDetailsTab(this.getAttribute('data-teacher-details-tab'));
+        });
+      });
+
+      if (detailsCloseBtn) {
+        detailsCloseBtn.addEventListener('click', closeDetails);
+      }
+
+      detailsModal.addEventListener('click', function(e) {
+        if (e.target === detailsModal) {
+          closeDetails();
+        }
+      });
+
+      document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape' && !detailsModal.classList.contains('hidden')) {
+          closeDetails();
+        }
+      });
+    });
   </script>
 
   <script>
