@@ -80,29 +80,23 @@
           <div class="student-row flex items-center justify-between gap-6">
             <!-- Info -->
             <div class="flex-1 min-w-0">
-              <h3 class="text-lg font-bold text-gray-900 mb-1">{{ student.name }}</h3>
-              <div class="flex flex-wrap gap-x-4 gap-y-1 text-sm">
-                <div class="flex items-center gap-1.5 text-gray-600">
-                  <svg class="w-4 h-4 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
-                    <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"/>
-                  </svg>
-                  <span class="font-medium">نام پدر:</span>
-                  <span>{{ student.father_name|default:'—' }}</span>
+              <div class="student-meta-table" role="table" aria-label="مشخصات دانش‌آموز">
+                <div class="student-meta-cell" role="row">
+                  <div class="student-meta-label">نام</div>
+                  <div class="student-meta-value">{{ student.name|default:'—' }}</div>
                 </div>
-                <div class="flex items-center gap-1.5 text-gray-600">
-                  <svg class="w-4 h-4 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
-                    <path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z"/>
-                  </svg>
-                  <span class="font-medium">موبایل:</span>
-                  <span>{{ student.mobile_number|default:'—' }}</span>
+                <div class="student-meta-cell" role="row">
+                  <div class="student-meta-label">ولد</div>
+                  <div class="student-meta-value">{{ student.father_name|default:'—' }}</div>
                 </div>
-                {% if student.school_class %}
-                <div class="flex items-center gap-1.5">
-                  <span class="inline-flex items-center px-2.5 py-0.5 rounded-lg text-xs font-medium bg-primary-100 text-primary-800">
-                    {{ student.school_class.name }}
-                  </span>
+                <div class="student-meta-cell" role="row">
+                  <div class="student-meta-label">موبایل</div>
+                  <div class="student-meta-value">{{ student.mobile_number|default:'—' }}</div>
                 </div>
-                {% endif %}
+                <div class="student-meta-cell" role="row">
+                  <div class="student-meta-label">صنف</div>
+                  <div class="student-meta-value student-meta-class">{{ student.school_class.name|default:'—' }}</div>
+                </div>
               </div>
             </div>
 
