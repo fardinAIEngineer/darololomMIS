@@ -61,31 +61,19 @@
           <div class="teacher-row flex items-center justify-between gap-6">
             <!-- Info -->
             <div class="flex-1 min-w-0">
-              <h3 class="text-lg font-bold text-gray-900 mb-1">{{ teacher.name }}</h3>
-              <div class="flex flex-wrap gap-x-4 gap-y-1 text-sm">
-                <div class="flex items-center gap-1.5 text-gray-600">
-                  <svg class="w-4 h-4 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
-                    <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"/>
-                  </svg>
-                  <span class="font-medium">نام پدر:</span>
-                  <span>{{ teacher.father_name|default:'—' }}</span>
+              <div class="teacher-meta-table" role="table" aria-label="مشخصات استاد">
+                <div class="teacher-meta-cell" role="row">
+                  <div class="teacher-meta-label">نام</div>
+                  <div class="teacher-meta-value">{{ teacher.name|default:'—' }}</div>
                 </div>
-                <div class="flex items-center gap-1.5 text-gray-600">
-                  <svg class="w-4 h-4 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
-                    <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h8a2 2 0 012 2v12a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm3 1h6v4H7V5zm6 6H7v2h6v-2z" clip-rule="evenodd"/>
-                  </svg>
-                  <span class="font-medium">تذکره:</span>
-                  <span>{{ teacher.id_number|default:'—' }}</span>
+                <div class="teacher-meta-cell" role="row">
+                  <div class="teacher-meta-label">ولد</div>
+                  <div class="teacher-meta-value">{{ teacher.father_name|default:'—' }}</div>
                 </div>
-                {% if teacher.get_persian_semesters %}
-                <div class="flex items-center gap-1.5 text-gray-600">
-                  <svg class="w-4 h-4 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
-                    <path d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z"/>
-                  </svg>
-                  <span class="font-medium">سمسترها:</span>
-                  <span>{{ teacher.get_persian_semesters }}</span>
+                <div class="teacher-meta-cell" role="row">
+                  <div class="teacher-meta-label">تذکره</div>
+                  <div class="teacher-meta-value">{{ teacher.id_number|default:'—' }}</div>
                 </div>
-                {% endif %}
               </div>
             </div>
 
