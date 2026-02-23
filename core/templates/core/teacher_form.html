@@ -1,6 +1,11 @@
 {% extends 'core/base.html' %}
 {% load static form_tags %}
 
+{% block extra_head %}
+<link rel="stylesheet" href="{% static 'css/pages/teacher_form.css' %}">
+{% endblock %}
+
+
 {% block content %}
   <div class="bg-white p-6 rounded-xl shadow-md ring-1 ring-gray-200">
     <div class="flex items-center justify-between mb-6">
@@ -306,10 +311,11 @@
     <script id="teacherPeriodsMoteseta" type="application/json">[]</script>
   {% endif %}
 
-{% block extra_js %}
-<link rel="stylesheet" href="https://unpkg.com/@majidh1/jalalidatepicker/dist/jalalidatepicker.min.css">
-<script src="https://unpkg.com/@majidh1/jalalidatepicker/dist/jalalidatepicker.min.js"></script>
 
+
+{% endblock %}
+
+{% block extra_js %}
 <script>
   (function(){
     const afghanMonths = ['حمل','ثور','جوزا','سرطان','اسد','سنبله','میزان','عقرب','قوس','جدی','دلو','حوت'];
@@ -622,6 +628,4 @@
     setStep(currentStep);
   })();
 </script>
-{% endblock %}
-
 {% endblock %}

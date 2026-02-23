@@ -1,4 +1,10 @@
 {% extends 'core/base.html' %}
+{% load static %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="{% static 'css/pages/class_confirm_delete.css' %}">
+{% endblock %}
+
 
 {% block content %}
   <div class="max-w-2xl mx-auto">

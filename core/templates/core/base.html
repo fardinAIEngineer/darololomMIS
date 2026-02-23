@@ -1,3 +1,4 @@
+{% load static %}
 <!doctype html>
 <html lang="fa" dir="rtl">
   <head>
@@ -18,144 +19,10 @@
         }
       })();
     </script>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-      tailwind.config = {
-        darkMode: 'class',
-        theme: {
-          extend: {
-            colors: {
-              primary: {
-                50: '#f0f9ff',
-                100: '#e0f2fe',
-                200: '#bae6fd',
-                300: '#7dd3fc',
-                400: '#38bdf8',
-                500: '#0ea5e9',
-                600: '#0284c7',
-                700: '#0369a1',
-                800: '#075985',
-                900: '#0c4a6e',
-              },
-              secondary: {
-                50: '#fdf4ff',
-                100: '#fae8ff',
-                200: '#f5d0fe',
-                300: '#f0abfc',
-                400: '#e879f9',
-                500: '#d946ef',
-                600: '#c026d3',
-                700: '#a21caf',
-                800: '#86198f',
-                900: '#701a75',
-              },
-              success: {
-                50: '#f0fdf4',
-                100: '#dcfce7',
-                200: '#bbf7d0',
-                300: '#86efac',
-                400: '#4ade80',
-                500: '#22c55e',
-                600: '#16a34a',
-                700: '#15803d',
-                800: '#166534',
-                900: '#14532d',
-              },
-              warning: {
-                50: '#fffbeb',
-                100: '#fef3c7',
-                200: '#fde68a',
-                300: '#fcd34d',
-                400: '#fbbf24',
-                500: '#f59e0b',
-                600: '#d97706',
-                700: '#b45309',
-                800: '#92400e',
-                900: '#78350f',
-              },
-              danger: {
-                50: '#fef2f2',
-                100: '#fee2e2',
-                200: '#fecaca',
-                300: '#fca5a5',
-                400: '#f87171',
-                500: '#ef4444',
-                600: '#dc2626',
-                700: '#b91c1c',
-                800: '#991b1b',
-                900: '#7f1d1d',
-              }
-            },
-            fontFamily: {
-              sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
-            },
-            boxShadow: {
-              'soft': '0 2px 15px -3px rgba(0, 0, 0, 0.07), 0 10px 20px -2px rgba(0, 0, 0, 0.04)',
-              'soft-lg': '0 10px 40px -10px rgba(0, 0, 0, 0.1)',
-            },
-            animation: {
-              'fade-in': 'fadeIn 0.3s ease-in-out',
-              'slide-in': 'slideIn 0.3s ease-out',
-              'slide-up': 'slideUp 0.3s ease-out',
-            },
-            keyframes: {
-              fadeIn: {
-                '0%': { opacity: '0' },
-                '100%': { opacity: '1' },
-              },
-              slideIn: {
-                '0%': { transform: 'translateX(-10px)', opacity: '0' },
-                '100%': { transform: 'translateX(0)', opacity: '1' },
-              },
-              slideUp: {
-                '0%': { transform: 'translateY(10px)', opacity: '0' },
-                '100%': { transform: 'translateY(0)', opacity: '1' },
-              },
-            },
-          }
-        }
-      }
-    </script>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-    <style>
-      html.dark body {
-        background: #0b1220;
-        color: #e2e8f0;
-      }
-      html.dark .bg-white { background-color: #0f172a; }
-      html.dark .bg-gray-50 { background-color: #0b1220; }
-      html.dark .bg-gray-100 { background-color: #111827; }
-      html.dark .bg-gray-200 { background-color: #1f2937; }
-      html.dark .bg-gray-50\/50 { background-color: rgba(15, 23, 42, 0.5); }
-      html.dark .bg-gray-100\/50 { background-color: rgba(17, 24, 39, 0.6); }
-      html.dark .text-gray-900 { color: #f1f5f9; }
-      html.dark .text-gray-800 { color: #e2e8f0; }
-      html.dark .text-gray-700 { color: #cbd5e1; }
-      html.dark .text-gray-600 { color: #94a3b8; }
-      html.dark .text-gray-500 { color: #94a3b8; }
-      html.dark .text-gray-400 { color: #64748b; }
-      html.dark .border-gray-100 { border-color: #1e293b; }
-      html.dark .border-gray-200 { border-color: #1f2937; }
-      html.dark .border-gray-300 { border-color: #334155; }
-      html.dark .shadow-soft { box-shadow: 0 2px 15px -3px rgba(0, 0, 0, 0.6), 0 10px 20px -2px rgba(0, 0, 0, 0.4); }
-      html.dark .shadow-soft-lg { box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.6); }
-      html.dark #theme-toggle { background-color: #0f172a; border-color: #1f2937; }
-      html.dark #theme-toggle:hover { background-color: #111827; }
-      html.dark #theme-icon-moon { color: #e2e8f0; }
-      html.dark input,
-      html.dark textarea,
-      html.dark select {
-        background-color: #0f172a;
-        color: #e2e8f0;
-        border-color: #334155;
-      }
-      html.dark input::placeholder,
-      html.dark textarea::placeholder {
-        color: #64748b;
-      }
-    </style>
+    <link rel="stylesheet" href="{% static 'css/utilities.css' %}">
+    <link rel="stylesheet" href="{% static 'css/base.css' %}">
+    <link rel="stylesheet" href="{% static 'css/pages/header.css' %}">
+    {% block extra_head %}{% endblock %}
   </head>
   <body class="bg-gradient-to-br from-gray-50 via-gray-100 to-gray-200 text-gray-900 font-sans antialiased min-h-screen">
     <div class="min-h-screen flex flex-col">
@@ -203,5 +70,7 @@
         </div>
       </footer>
     </div>
+
+    {% block extra_js %}{% endblock %}
   </body>
 </html>

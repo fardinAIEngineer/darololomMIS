@@ -1,35 +1,12 @@
 {% extends 'core/base.html' %}
 {% load static %}
 
+{% block extra_head %}
+<link rel="stylesheet" href="{% static 'css/pages/student_list.css' %}">
+{% endblock %}
+
+
 {% block content %}
-<style>
-  @font-face {
-    font-family: 'B Nazanin';
-    src: url("{% static 'fonts/B_NAZANIN/B-NAZANIN.TTF' %}") format('truetype');
-    font-weight: normal;
-    font-style: normal;
-  }
-  
-  /* Apply B Nazanin to all card text with proper RTL rendering */
-  #idCardContent * {
-    font-family: 'B Nazanin', Tahoma, Arial, sans-serif !important;
-    direction: rtl !important;
-    unicode-bidi: embed !important;
-    text-rendering: optimizeLegibility !important;
-    -webkit-font-smoothing: antialiased !important;
-    -moz-osx-font-smoothing: grayscale !important;
-  }
-  
-  /* Specific fix for text elements to prevent character separation */
-  #idCardContent h2,
-  #idCardContent h3,
-  #idCardContent span,
-  #idCardContent div {
-    white-space: normal !important;
-    word-spacing: normal !important;
-    letter-spacing: normal !important;
-  }
-</style>
   <!-- Page Header -->
   <div class="mb-6">
     <div class="flex items-center justify-between">
@@ -472,9 +449,6 @@
   ]
 </script>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-
 <script>
     let studentsData = [];
     try {
@@ -600,9 +574,12 @@
     function printIdCard() {
       const printContent = document.getElementById('idCardContent').cloneNode(true);
       const printWindow = window.open('', '_blank');
+      if (!printWindow) return;
       
-      // Get the absolute URL for the font
-      const fontUrl = "{{ request.scheme }}://{{ request.get_host }}{% static 'fonts/B_NAZANIN/B-NAZANIN.TTF' %}";
+      const utilitiesCss = "{{ request.scheme }}://{{ request.get_host }}{% static 'css/utilities.css' %}";
+      const baseCss = "{{ request.scheme }}://{{ request.get_host }}{% static 'css/base.css' %}";
+      const studentListCss = "{{ request.scheme }}://{{ request.get_host }}{% static 'css/pages/student_list.css' %}";
+      const printCss = "{{ request.scheme }}://{{ request.get_host }}{% static 'css/pages/student_card_print.css' %}";
       
       printWindow.document.write(`
         <!DOCTYPE html>
@@ -610,80 +587,10 @@
         <head>
           <meta charset="UTF-8">
           <title>کارت شناسایی</title>
-          <script src="https://cdn.tailwindcss.com"><\/script>
-          <style>
-            @font-face {
-              font-family: 'B Nazanin';
-              src: url("${fontUrl}") format('truetype');
-              font-weight: normal;
-              font-style: normal;
-              font-display: block;
-            }
-            
-            * {
-              margin: 0;
-              padding: 0;
-              box-sizing: border-box;
-              font-family: 'B Nazanin', Tahoma, Arial, sans-serif !important;
-              direction: rtl !important;
-              unicode-bidi: embed !important;
-              text-rendering: optimizeLegibility !important;
-            }
-            
-            @page {
-              size: 440px 620px;
-              margin: 0;
-            }
-            
-            @media print {
-              body {
-                margin: 0 !important;
-                padding: 0 !important;
-              }
-              #printCard {
-                width: 440px !important;
-                height: 620px !important;
-                margin: 0 !important;
-                padding: 0 !important;
-                page-break-after: avoid;
-              }
-              #printCard * {
-                font-family: 'B Nazanin', Tahoma, Arial, sans-serif !important;
-                direction: rtl !important;
-                unicode-bidi: embed !important;
-                text-rendering: optimizeLegibility !important;
-              }
-            }
-            
-            body { 
-              display: flex; 
-              justify-content: center; 
-              align-items: center; 
-              min-height: 100vh;
-              background: #f3f4f6;
-              margin: 0;
-              padding: 20px;
-            }
-            
-            #printCard {
-              width: 440px;
-              height: 620px;
-            }
-            
-            #printCard * {
-              white-space: normal !important;
-              word-spacing: normal !important;
-              letter-spacing: normal !important;
-            }
-          <\/style>
-          <script>
-            // Wait for fonts to load before allowing print
-            window.onload = function() {
-              document.fonts.ready.then(function() {
-                console.log('Fonts loaded in print window');
-              });
-            };
-          <\/script>
+          <link rel="stylesheet" href="${utilitiesCss}">
+          <link rel="stylesheet" href="${baseCss}">
+          <link rel="stylesheet" href="${studentListCss}">
+          <link rel="stylesheet" href="${printCss}">
         </head>
         <body>
           <div id="printCard">${printContent.outerHTML}</div>
@@ -704,56 +611,8 @@
       });
     }
 
-    async function printToPDF() {
-      const element = document.getElementById('idCardContent');
-      
-      try {
-        // Wait for fonts to load before capturing
-        await document.fonts.ready;
-        
-        // Add a small delay to ensure everything is rendered
-        await new Promise(resolve => setTimeout(resolve, 500));
-        
-        // Use html2canvas to capture the card exactly as displayed
-        const canvas = await html2canvas(element, {
-          scale: 3,  // Increased scale for better quality
-          useCORS: true,
-          allowTaint: true,
-          backgroundColor: '#ffffff',
-          logging: false,
-          width: 440,
-          height: 620,
-          letterRendering: true,  // Better text rendering
-          foreignObjectRendering: false  // Use standard rendering
-        });
-        
-        // Check if canvas has content
-        console.log('Canvas created:', canvas.width, 'x', canvas.height);
-        
-        // Create PDF from canvas
-        const imgData = canvas.toDataURL('image/jpeg', 1.0);
-        
-        // Import jsPDF from window
-        const { jsPDF } = window.jspdf || window;
-        
-        if (!jsPDF) {
-          throw new Error('jsPDF not loaded');
-        }
-        
-        const pdf = new jsPDF({
-          orientation: 'portrait',
-          unit: 'px',
-          format: [440, 620],
-          compress: true
-        });
-        
-        pdf.addImage(imgData, 'JPEG', 0, 0, 440, 620);
-        pdf.save('student-id-card.pdf');
-        
-      } catch (error) {
-        console.error('PDF Error:', error);
-        alert('خطا در ایجاد PDF. لطفاً از گزینه چاپ مستقیم استفاده کنید.');
-      }
+    function printToPDF() {
+      printIdCard();
     }
 
     // Close modal on outside click

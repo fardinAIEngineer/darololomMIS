@@ -1,5 +1,11 @@
 {% extends 'core/base.html' %}
+{% load static %}
 {% load form_tags %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="{% static 'css/pages/subject_form.css' %}">
+{% endblock %}
+
 
 {% block content %}
   <div class="max-w-2xl mx-auto">
@@ -140,6 +146,9 @@
     <script id="levelIds" type="application/json">{}</script>
   {% endif %}
 
+
+{% endblock %}
+
 {% block extra_js %}
 <script>
   (function(){
@@ -176,5 +185,4 @@
     }
   })();
 </script>
-{% endblock %}
 {% endblock %}

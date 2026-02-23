@@ -2,70 +2,7 @@
 {% load static form_tags %}
 
 {% block extra_head %}
-<style>
-  /* Modern Autocomplete Combobox Styles */
-  #class_autocomplete {
-    transition: all 0.2s ease;
-  }
-  
-  #class_autocomplete:focus {
-    outline: none;
-    border-color: #3b82f6;
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-  }
-  
-  #class_suggestions {
-    animation: slideDown 0.2s ease;
-  }
-  
-  @keyframes slideDown {
-    from {
-      opacity: 0;
-      transform: translateY(-10px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
-  
-  .suggestion-item {
-    padding: 12px 16px;
-    cursor: pointer;
-    transition: background-color 0.15s ease;
-    direction: rtl;
-    text-align: right;
-    border-bottom: 1px solid #f3f4f6;
-  }
-  
-  .suggestion-item:last-child {
-    border-bottom: none;
-  }
-  
-  .suggestion-item:hover,
-  .suggestion-item.selected {
-    background-color: #eff6ff;
-  }
-  
-  .suggestion-item.selected {
-    background-color: #dbeafe;
-    font-weight: 500;
-  }
-  
-  .no-results {
-    padding: 16px;
-    text-align: center;
-    color: #6b7280;
-    font-size: 14px;
-  }
-  
-  .loading {
-    padding: 16px;
-    text-align: center;
-    color: #6b7280;
-    font-size: 14px;
-  }
-</style>
+<link rel="stylesheet" href="{% static 'css/pages/student_form_clean.css' %}">
 {% endblock %}
 
 {% block content %}
@@ -366,10 +303,11 @@
   </div>
 
 
-{% block extra_js %}
-  <link rel="stylesheet" href="https://unpkg.com/@majidh1/jalalidatepicker/dist/jalalidatepicker.min.css">
-  <script src="https://unpkg.com/@majidh1/jalalidatepicker/dist/jalalidatepicker.min.js"></script>
 
+
+{% endblock %}
+
+{% block extra_js %}
   {% if period_names %}
     {{ period_names|json_script:"periodNames" }}
   {% else %}
@@ -990,6 +928,4 @@
     setStep(currentStep);
   })();
 </script>
-{% endblock %}
-
 {% endblock %}

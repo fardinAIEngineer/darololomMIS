@@ -1,0 +1,26 @@
+@font-face {
+    font-family: 'B Nazanin';
+    src: url("../../fonts/B_NAZANIN/B-NAZANIN.TTF") format('truetype');
+    font-weight: normal;
+    font-style: normal;
+  }
+  
+  /* Apply B Nazanin to all card text with proper RTL rendering */
+  #idCardContent * {
+    font-family: 'B Nazanin', Tahoma, Arial, sans-serif !important;
+    direction: rtl !important;
+    unicode-bidi: embed !important;
+    text-rendering: optimizeLegibility !important;
+    -webkit-font-smoothing: antialiased !important;
+    -moz-osx-font-smoothing: grayscale !important;
+  }
+  
+  /* Specific fix for text elements to prevent character separation */
+  #idCardContent h2,
+  #idCardContent h3,
+  #idCardContent span,
+  #idCardContent div {
+    white-space: normal !important;
+    word-spacing: normal !important;
+    letter-spacing: normal !important;
+  }

@@ -1,6 +1,11 @@
 {% extends 'core/base.html' %}
 {% load static %}
 
+{% block extra_head %}
+<link rel="stylesheet" href="{% static 'css/pages/classes_list.css' %}">
+{% endblock %}
+
+
 {% block content %}
   <!-- Page Header -->
   <div class="mb-6">
