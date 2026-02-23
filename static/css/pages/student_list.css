@@ -141,6 +141,8 @@ main .hover\:underline:hover {
   padding: 0.65rem 0.9rem;
   line-height: 1.25;
   font-size: 1rem;
+  font-family: "B Nazanin", Tahoma, Arial, sans-serif !important;
+  font-weight: 800 !important;
 }
 
 .btn-student-details {
