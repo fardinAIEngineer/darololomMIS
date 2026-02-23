@@ -77,52 +77,38 @@
     <div class="divide-y divide-gray-100">
       {% for student in page_obj.object_list %}
         <div class="p-6 hover:bg-gray-50/50 transition-colors">
-          <div class="flex items-center justify-between gap-6">
-            <div class="flex items-center gap-5 flex-1">
-              <!-- Avatar -->
-              <div class="flex-shrink-0">
-                {% if student.image %}
-                  <img src="{{ student.image.url }}" alt="{{ student.name }}" class="h-16 w-16 object-cover rounded-xl ring-2 ring-primary-100 shadow-sm">
-                {% else %}
-                  <div class="h-16 w-16 rounded-xl bg-gradient-to-br from-primary-100 to-primary-200 flex items-center justify-center text-primary-600 ring-2 ring-primary-100 shadow-sm">
-                    <svg class="h-8 w-8" fill="currentColor" viewBox="0 0 20 20">
-                      <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"/>
-                    </svg>
-                  </div>
-                {% endif %}
-              </div>
-
-              <!-- Info -->
-              <div class="flex-1 min-w-0">
-                <h3 class="text-lg font-bold text-gray-900 mb-1">{{ student.name }}</h3>
-                <div class="flex flex-wrap gap-x-4 gap-y-1 text-sm">
-                  <div class="flex items-center gap-1.5 text-gray-600">
-                    <svg class="w-4 h-4 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
-                      <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"/>
-                    </svg>
-                    <span class="font-medium">نام پدر:</span>
-                    <span>{{ student.father_name|default:'—' }}</span>
-                  </div>
-                  <div class="flex items-center gap-1.5 text-gray-600">
-                    <svg class="w-4 h-4 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
-                      <path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z"/>
-                    </svg>
-                    <span class="font-medium">موبایل:</span>
-                    <span>{{ student.mobile_number|default:'—' }}</span>
-                  </div>
-                  {% if student.school_class %}
-                  <div class="flex items-center gap-1.5">
-                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-lg text-xs font-medium bg-primary-100 text-primary-800">
-                      {{ student.school_class.name }}
-                    </span>
-                  </div>
-                  {% endif %}
+          <div class="student-row flex items-center justify-between gap-6">
+            <!-- Info -->
+            <div class="flex-1 min-w-0">
+              <h3 class="text-lg font-bold text-gray-900 mb-1">{{ student.name }}</h3>
+              <div class="flex flex-wrap gap-x-4 gap-y-1 text-sm">
+                <div class="flex items-center gap-1.5 text-gray-600">
+                  <svg class="w-4 h-4 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"/>
+                  </svg>
+                  <span class="font-medium">نام پدر:</span>
+                  <span>{{ student.father_name|default:'—' }}</span>
                 </div>
+                <div class="flex items-center gap-1.5 text-gray-600">
+                  <svg class="w-4 h-4 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z"/>
+                  </svg>
+                  <span class="font-medium">موبایل:</span>
+                  <span>{{ student.mobile_number|default:'—' }}</span>
+                </div>
+                {% if student.school_class %}
+                <div class="flex items-center gap-1.5">
+                  <span class="inline-flex items-center px-2.5 py-0.5 rounded-lg text-xs font-medium bg-primary-100 text-primary-800">
+                    {{ student.school_class.name }}
+                  </span>
+                </div>
+                {% endif %}
               </div>
             </div>
 
-            <!-- Actions -->
-            <div class="student-actions flex items-center gap-2">
+            <!-- Actions + Photo -->
+            <div class="student-actions-wrap">
+              <div class="student-actions flex items-center gap-2">
               <a href="{% url 'core:student_edit' student.pk %}" class="inline-flex items-center gap-2 bg-warning-500 hover:bg-warning-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 shadow-sm hover:shadow">
                 <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                   <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z"/>
@@ -185,6 +171,19 @@
                 دانلود شهادت‌نامه
               </a>
               {% endif %}
+              </div>
+
+              <div class="student-actions-photo" aria-hidden="true">
+                {% if student.image %}
+                  <img src="{{ student.image.url }}" alt="{{ student.name }}" class="student-actions-photo-image">
+                {% else %}
+                  <div class="student-actions-photo-fallback">
+                    <svg class="h-10 w-10" fill="currentColor" viewBox="0 0 20 20">
+                      <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"/>
+                    </svg>
+                  </div>
+                {% endif %}
+              </div>
             </div>
           </div>
         </div>

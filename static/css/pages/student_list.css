@@ -52,12 +52,25 @@ main .hover\:underline:hover {
 }
 
 /* Keep student action buttons visually equal */
+.student-row {
+  align-items: stretch;
+}
+
+.student-actions-wrap {
+  display: flex;
+  align-items: stretch;
+  gap: 0.5rem;
+  flex-shrink: 0;
+  min-width: 0;
+}
+
 .student-actions {
+  flex: 1 1 auto;
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 0.5rem;
   align-items: stretch;
-  width: min(100%, 33rem);
+  width: min(100%, 30rem);
 }
 
 .student-actions > a,
@@ -88,6 +101,53 @@ main .hover\:underline:hover {
   flex-shrink: 0;
 }
 
+.student-actions-photo {
+  width: 11.5rem;
+  min-width: 11.5rem;
+  border-radius: 0.8rem;
+  overflow: hidden;
+  border: 2px solid #dbeafe;
+  box-shadow: 0 8px 18px -12px rgba(15, 23, 42, 0.45);
+  background: #f8fafc;
+  display: flex;
+  align-items: stretch;
+  justify-content: stretch;
+}
+
+.student-actions-photo-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.student-actions-photo-fallback {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #0f766e;
+  background: linear-gradient(135deg, #e0f2fe 0%, #cffafe 100%);
+}
+
+@media (max-width: 1080px) {
+  .student-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .student-actions-wrap {
+    width: 100%;
+  }
+
+  .student-actions-photo {
+    width: 100%;
+    min-width: 0;
+    min-height: 200px;
+  }
+}
+
 @media (max-width: 860px) {
   main .text-sm {
     font-size: 1rem;
@@ -108,6 +168,10 @@ main .hover\:underline:hover {
   .student-actions {
     grid-template-columns: 1fr;
     width: 100%;
+  }
+
+  .student-actions-photo {
+    min-height: 180px;
   }
 }
 
