@@ -74,6 +74,69 @@ function clear_old(): void
     unset($_SESSION['_old']);
 }
 
+function auth_user(): ?array
+{
+    $user = $_SESSION['_auth_user'] ?? null;
+    return is_array($user) ? $user : null;
+}
+
+function auth_check(): bool
+{
+    return auth_user() !== null;
+}
+
+function auth_id(): int
+{
+    $user = auth_user();
+    return (int) ($user['id'] ?? 0);
+}
+
+function auth_login(array $user): void
+{
+    if (session_status() === PHP_SESSION_ACTIVE) {
+        session_regenerate_id(true);
+    }
+
+    $_SESSION['_auth_user'] = [
+        'id' => (int) ($user['id'] ?? 0),
+        'full_name' => (string) ($user['full_name'] ?? ''),
+        'username' => (string) ($user['username'] ?? ''),
+        'role' => (string) ($user['role'] ?? 'admin'),
+        'can_register_students' => (int) ($user['can_register_students'] ?? 0),
+        'can_register_teachers' => (int) ($user['can_register_teachers'] ?? 0),
+    ];
+}
+
+function auth_logout(): void
+{
+    unset($_SESSION['_auth_user']);
+    unset($_SESSION['_intended']);
+}
+
+function is_super_admin(): bool
+{
+    $user = auth_user();
+    return (string) ($user['role'] ?? '') === 'super_admin';
+}
+
+function can(string $permission): bool
+{
+    if (is_super_admin()) {
+        return true;
+    }
+
+    $user = auth_user();
+    if (!$user) {
+        return false;
+    }
+
+    return match ($permission) {
+        'register_students' => (int) ($user['can_register_students'] ?? 0) === 1,
+        'register_teachers' => (int) ($user['can_register_teachers'] ?? 0) === 1,
+        default => false,
+    };
+}
+
 function paginated_sizes(): array
 {
     return (array) config('pagination.allowed', [10, 20, 50, 100]);

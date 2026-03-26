@@ -10,7 +10,7 @@ $router = new Router();
 $registerRoutes = require dirname(__DIR__) . '/config/routes.php';
 $registerRoutes($router);
 
-$method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
+$method = strtoupper($_SERVER['REQUEST_METHOD'] ?? 'GET');
 $uri = $_SERVER['REQUEST_URI'] ?? '/';
 $path = parse_url($uri, PHP_URL_PATH) ?: '/';
 
@@ -19,4 +19,19 @@ if ($scriptName !== '/' && str_starts_with($path, $scriptName)) {
     $path = substr($path, strlen($scriptName)) ?: '/';
 }
 
-$router->dispatch($method, rtrim($path, '/') ?: '/');
+$path = rtrim($path, '/') ?: '/';
+
+$publicRoutes = [
+    'GET:/login',
+    'POST:/login',
+];
+
+if (!in_array($method . ':' . $path, $publicRoutes, true) && !auth_check()) {
+    if ($method === 'GET') {
+        $_SESSION['_intended'] = $path;
+    }
+    header('Location: ' . url('/login'));
+    exit;
+}
+
+$router->dispatch($method, $path);

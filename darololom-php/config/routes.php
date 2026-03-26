@@ -5,7 +5,15 @@ declare(strict_types=1);
 use App\Core\Router;
 
 return static function (Router $router): void {
+    $router->get('/login', 'AuthController@showLogin');
+    $router->post('/login', 'AuthController@login');
+    $router->post('/logout', 'AuthController@logout');
+
     $router->get('/', 'DashboardController@index');
+
+    $router->get('/users', 'UsersController@index');
+    $router->get('/users/create', 'UsersController@create');
+    $router->post('/users/store', 'UsersController@store');
 
     $router->get('/students', 'StudentsController@index');
     $router->get('/students/create', 'StudentsController@create');

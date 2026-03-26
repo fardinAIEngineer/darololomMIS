@@ -107,6 +107,8 @@ final class StudentsController extends Controller
 
     public function create(array $params = []): void
     {
+        $this->authorize('register_students', 'شما اجازه ثبت‌نام شاگردان را ندارید.', '/students');
+
         $this->render('students/form', [
             'title' => 'ثبت دانش‌آموز',
             'student' => null,
@@ -119,6 +121,7 @@ final class StudentsController extends Controller
 
     public function store(array $params = []): void
     {
+        $this->authorize('register_students', 'شما اجازه ثبت‌نام شاگردان را ندارید.', '/students');
         $this->csrfCheck();
         $db = Database::connection();
 

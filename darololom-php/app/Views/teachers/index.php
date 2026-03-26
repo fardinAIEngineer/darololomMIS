@@ -17,7 +17,9 @@ $totalPages = max(1, (int) ceil($total / max(1, $pageSize)));
         <button class="section-btn btn btn-default" type="submit">فیلتر</button>
     </form>
 
-    <a class="section-btn btn btn-default" href="<?= e(url('/teachers/create')) ?>">+ ثبت استاد</a>
+    <?php if (can('register_teachers')): ?>
+        <a class="section-btn btn btn-default" href="<?= e(url('/teachers/create')) ?>">+ ثبت استاد</a>
+    <?php endif; ?>
 </div>
 
 <div class="news-thumb">

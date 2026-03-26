@@ -107,6 +107,35 @@ body.rtl-body .navbar-nav > li > a {
     text-align: right;
 }
 
+body.rtl-body .nav-user-label {
+    padding: 15px 6px;
+    color: #8b9b63;
+    font-size: 13px;
+}
+
+body.rtl-body .nav-user-label span {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+body.rtl-body .nav-logout-form {
+    margin: 0;
+}
+
+body.rtl-body .nav-logout-btn {
+    color: #55633a;
+    font-weight: 600;
+    padding: 15px 8px;
+    text-decoration: none;
+}
+
+body.rtl-body .nav-logout-btn:hover,
+body.rtl-body .nav-logout-btn:focus {
+    color: #2c3616;
+    text-decoration: none;
+}
+
 body.rtl-body .dropdown-menu {
     right: 0;
     left: auto;

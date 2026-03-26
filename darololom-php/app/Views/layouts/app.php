@@ -1,4 +1,9 @@
-<?php declare(strict_types=1); ?>
+<?php
+declare(strict_types=1);
+
+$currentUser = auth_user();
+$isLoggedIn = $currentUser !== null;
+?>
 <!doctype html>
 <html lang="fa" dir="rtl">
 <head>
@@ -19,6 +24,8 @@
     <link rel="stylesheet" href="<?= e(url('/assets/css/modules/subjects.css')) ?>">
     <link rel="stylesheet" href="<?= e(url('/assets/css/modules/grades.css')) ?>">
     <link rel="stylesheet" href="<?= e(url('/assets/css/modules/contracts.css')) ?>">
+    <link rel="stylesheet" href="<?= e(url('/assets/css/modules/auth.css')) ?>">
+    <link rel="stylesheet" href="<?= e(url('/assets/css/modules/users.css')) ?>">
 </head>
 <body id="top" class="rtl-body">
     <section class="preloader">
@@ -52,12 +59,26 @@
             </div>
             <div class="collapse navbar-collapse">
                 <ul class="nav navbar-nav navbar-right">
-                    <li><a href="<?= e(url('/')) ?>">داشبورد</a></li>
-                    <li><a href="<?= e(url('/students')) ?>">دانش‌آموزان</a></li>
-                    <li><a href="<?= e(url('/teachers')) ?>">اساتید</a></li>
-                    <li><a href="<?= e(url('/classes')) ?>">صنوف</a></li>
-                    <li><a href="<?= e(url('/subjects')) ?>">مضامین</a></li>
-                    <li><a href="<?= e(url('/grades')) ?>">نمرات</a></li>
+                    <?php if ($isLoggedIn): ?>
+                        <li><a href="<?= e(url('/')) ?>">داشبورد</a></li>
+                        <li><a href="<?= e(url('/students')) ?>">دانش‌آموزان</a></li>
+                        <li><a href="<?= e(url('/teachers')) ?>">اساتید</a></li>
+                        <li><a href="<?= e(url('/classes')) ?>">صنوف</a></li>
+                        <li><a href="<?= e(url('/subjects')) ?>">مضامین</a></li>
+                        <li><a href="<?= e(url('/grades')) ?>">نمرات</a></li>
+                        <?php if (is_super_admin()): ?>
+                            <li><a href="<?= e(url('/users')) ?>">مدیریت کاربران</a></li>
+                        <?php endif; ?>
+                        <li class="nav-user-label"><span><i class="fa fa-user"></i><?= e((string) ($currentUser['full_name'] ?? $currentUser['username'] ?? 'کاربر')) ?></span></li>
+                        <li>
+                            <form method="post" action="<?= e(url('/logout')) ?>" class="nav-logout-form">
+                                <?= csrf_field() ?>
+                                <button type="submit" class="btn btn-link nav-logout-btn">خروج</button>
+                            </form>
+                        </li>
+                    <?php else: ?>
+                        <li><a href="<?= e(url('/login')) ?>">ورود</a></li>
+                    <?php endif; ?>
                 </ul>
             </div>
         </div>

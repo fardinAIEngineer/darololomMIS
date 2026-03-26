@@ -22,7 +22,9 @@ $totalPages = max(1, (int) ceil($total / max(1, $pageSize)));
         <button class="section-btn btn btn-default" type="submit">فیلتر</button>
     </form>
 
-    <a class="section-btn btn btn-default" href="<?= e(url('/students/create')) ?>">+ ثبت دانش‌آموز</a>
+    <?php if (can('register_students')): ?>
+        <a class="section-btn btn btn-default" href="<?= e(url('/students/create')) ?>">+ ثبت دانش‌آموز</a>
+    <?php endif; ?>
 </div>
 
 <div class="news-thumb">

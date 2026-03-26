@@ -31,4 +31,36 @@ abstract class Controller
     {
         return (int) ($params[$key] ?? 0);
     }
+
+    protected function requireAuth(): array
+    {
+        $user = auth_user();
+        if (!$user) {
+            $this->redirect('/login');
+        }
+
+        return $user;
+    }
+
+    protected function onlySuperAdmin(string $message = 'شما اجازه دسترسی به این بخش را ندارید.', string $redirect = '/'): void
+    {
+        $this->requireAuth();
+        if (is_super_admin()) {
+            return;
+        }
+
+        flash('error', $message);
+        $this->redirect($redirect);
+    }
+
+    protected function authorize(string $permission, string $message = 'شما اجازه انجام این عملیات را ندارید.', string $redirect = '/'): void
+    {
+        $this->requireAuth();
+        if (can($permission)) {
+            return;
+        }
+
+        flash('error', $message);
+        $this->redirect($redirect);
+    }
 }
