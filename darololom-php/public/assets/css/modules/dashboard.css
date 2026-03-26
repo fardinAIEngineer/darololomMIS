@@ -5,3 +5,175 @@
 .dashboard-lists {
     margin-top: 20px;
 }
+
+.chart-card {
+    min-height: 320px;
+}
+
+.chart-empty {
+    margin-top: 20px;
+    color: #74835b;
+}
+
+.pie-chart-block {
+    margin-top: 18px;
+    display: grid;
+    grid-template-columns: 190px 1fr;
+    align-items: center;
+    gap: 20px;
+}
+
+.gender-pie {
+    width: 180px;
+    height: 180px;
+    border-radius: 50%;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.45), 0 10px 28px rgba(69, 83, 36, 0.14);
+}
+
+.gender-pie-center {
+    width: 92px;
+    height: 92px;
+    background: #ffffff;
+    border-radius: 50%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 6px 15px rgba(72, 86, 39, 0.12);
+}
+
+.gender-pie-center strong {
+    color: #4b5c33;
+    font-size: 24px;
+    line-height: 1;
+}
+
+.gender-pie-center span {
+    margin-top: 4px;
+    color: #7a8862;
+    font-size: 12px;
+}
+
+.pie-legend {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.pie-legend-item {
+    display: grid;
+    grid-template-columns: 14px 1fr auto;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 10px;
+    border: 1px solid #e6edd1;
+    border-radius: 10px;
+    background: #fbfcf8;
+}
+
+.legend-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+}
+
+.legend-label {
+    color: #516034;
+    font-weight: 700;
+}
+
+.legend-value {
+    color: #6d7d54;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.chart-list {
+    margin-top: 15px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.chart-row {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.chart-meta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    font-size: 13px;
+}
+
+.chart-label {
+    color: #4e5d35;
+    font-weight: 700;
+}
+
+.chart-value {
+    color: #687850;
+    font-weight: 600;
+}
+
+.chart-track {
+    position: relative;
+    height: 10px;
+    background: #edf3dd;
+    border-radius: 999px;
+    overflow: hidden;
+}
+
+.chart-fill {
+    position: absolute;
+    top: 0;
+    right: 0;
+    height: 100%;
+    border-radius: 999px;
+}
+
+.chart-fill-male {
+    background: linear-gradient(135deg, #3c86f2 0%, #1f63c8 100%);
+}
+
+.chart-fill-female {
+    background: linear-gradient(135deg, #ff6f91 0%, #d84e78 100%);
+}
+
+.chart-fill-level-1 {
+    background: linear-gradient(135deg, #a5c422 0%, #80a217 100%);
+}
+
+.chart-fill-level-2 {
+    background: linear-gradient(135deg, #26b9a0 0%, #1a927f 100%);
+}
+
+.chart-fill-level-3 {
+    background: linear-gradient(135deg, #f0a43b 0%, #d4871f 100%);
+}
+
+.chart-fill-level-4 {
+    background: linear-gradient(135deg, #7f86ff 0%, #5f66dc 100%);
+}
+
+.chart-fill-level-5 {
+    background: linear-gradient(135deg, #ef767a 0%, #d95762 100%);
+}
+
+@media (max-width: 991px) {
+    .chart-card {
+        min-height: auto;
+        margin-bottom: 16px;
+    }
+
+    .pie-chart-block {
+        grid-template-columns: 1fr;
+    }
+}

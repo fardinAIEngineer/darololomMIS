@@ -59,6 +59,28 @@ body.rtl-body .pull-left {
     color: #fff;
 }
 
+.site-header .site-header-intro p {
+    margin: 0;
+    font-weight: 600;
+    line-height: 1.8;
+}
+
+.site-header .site-header-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px 20px;
+    justify-content: flex-end;
+    align-items: center;
+    direction: rtl;
+    text-align: right;
+}
+
+.site-header .site-header-meta span {
+    display: inline-flex;
+    align-items: center;
+    white-space: nowrap;
+}
+
 .site-header p,
 .site-header span,
 .site-header a {
@@ -286,6 +308,37 @@ body.rtl-body .inline-checks label input[type='checkbox'] {
     text-align: center;
 }
 
+.system-footer .footer-thumb p {
+    line-height: 1.9;
+}
+
+.system-footer .footer-links {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 10px;
+}
+
+.system-footer .footer-links li {
+    margin-bottom: 7px;
+}
+
+.system-footer .footer-links a {
+    color: #ffffff;
+    font-weight: 500;
+}
+
+.system-footer .footer-links a:hover,
+.system-footer .footer-links a:focus {
+    color: #e6f2b8;
+    text-decoration: none;
+}
+
+.system-footer .footer-copy {
+    margin-top: 8px;
+    font-size: 13px;
+    opacity: 0.95;
+}
+
 @media (max-width: 991px) {
     .module-form {
         grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -319,6 +372,15 @@ body.rtl-body .inline-checks label input[type='checkbox'] {
 
     .contract-meta {
         grid-template-columns: 1fr;
+    }
+
+    .site-header .site-header-meta {
+        justify-content: flex-start;
+        margin-top: 8px;
+    }
+
+    .site-header .site-header-meta span {
+        white-space: normal;
     }
 }
 

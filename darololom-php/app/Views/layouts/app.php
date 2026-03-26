@@ -28,13 +28,13 @@
     <header class="site-header">
         <div class="container">
             <div class="row">
-                <div class="col-md-4 col-sm-5">
+                <div class="col-md-4 col-sm-5 site-header-intro">
                     <p>سیستم مدیریت اطلاعات دارالعلوم عالی الحاج سید منصور نادری</p>
                 </div>
-                <div class="col-md-8 col-sm-7 text-align-right">
-                    <span class="phone-icon"><i class="fa fa-phone"></i> 0700-000000</span>
-                    <span class="date-icon"><i class="fa fa-calendar-plus-o"></i> شنبه تا پنج‌شنبه</span>
-                    <span class="email-icon"><i class="fa fa-envelope-o"></i> <a href="#">info@darololom.local</a></span>
+                <div class="col-md-8 col-sm-7 site-header-meta">
+                    <span class="phone-icon"><i class="fa fa-phone"></i> شماره تماس: 0700-000000</span>
+                    <span class="date-icon"><i class="fa fa-calendar-plus-o"></i> روزهای کاری: شنبه تا پنج‌شنبه</span>
+                    <span class="email-icon"><i class="fa fa-envelope-o"></i> ایمیل: <a href="mailto:info@darololom.local">info@darololom.local</a></span>
                 </div>
             </div>
         </div>
@@ -75,19 +75,24 @@
         </div>
     </main>
 
-    <footer data-stellar-background-ratio="5">
+    <footer class="system-footer" data-stellar-background-ratio="5">
         <div class="container">
             <div class="row">
                 <div class="col-md-8 col-sm-6">
                     <div class="footer-thumb">
-                        <h4 class="wow fadeInUp" data-wow-delay="0.4s">DarolOlom MIS - PHP/MySQL</h4>
-                        <p>بازنویسی کامل سیستم با معماری ماژولار PHP و ظاهر یک‌دست مبتنی بر قالب health.</p>
+                        <h4 class="wow fadeInUp" data-wow-delay="0.4s">سیستم مدیریت معلومات دارالعلوم</h4>
+                        <p>این سامانه برای مدیریت یک‌پارچه دانش‌آموزان، استادان، صنوف، مضامین، نمرات، قراردادها و گزارش‌های آموزشی دارالعلوم طراحی شده است.</p>
                     </div>
                 </div>
-                <div class="col-md-4 col-sm-6 text-align-right">
+                <div class="col-md-4 col-sm-6">
                     <div class="footer-thumb">
-                        <h4 class="wow fadeInUp" data-wow-delay="0.4s">نسخه</h4>
-                        <p>© <?= date('Y') ?> همه حقوق محفوظ است.</p>
+                        <h4 class="wow fadeInUp" data-wow-delay="0.4s">دسترسی سریع</h4>
+                        <ul class="footer-links">
+                            <li><a href="<?= e(url('/students')) ?>">مدیریت دانش‌آموزان</a></li>
+                            <li><a href="<?= e(url('/teachers')) ?>">مدیریت استادان</a></li>
+                            <li><a href="<?= e(url('/grades')) ?>">ثبت و مدیریت نمرات</a></li>
+                        </ul>
+                        <p class="footer-copy">© <?= date('Y') ?> دارالعلوم عالی الحاج سید منصور نادری - همه حقوق محفوظ است.</p>
                     </div>
                 </div>
             </div>
