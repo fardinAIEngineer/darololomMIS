@@ -16,6 +16,7 @@
     grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: 8px;
     margin-bottom: 16px;
+    direction: rtl;
 }
 
 .wizard-step {
@@ -75,8 +76,9 @@
     display: flex;
     gap: 10px;
     align-items: center;
-    justify-content: flex-end;
+    justify-content: flex-start;
     margin-top: 6px;
+    direction: rtl;
 }
 
 @media (max-width: 991px) {

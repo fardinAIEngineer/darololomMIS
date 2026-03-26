@@ -1,10 +1,57 @@
 @import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;700&display=swap');
 
+html[dir='rtl'] {
+    direction: rtl;
+}
+
 body.rtl-body {
     direction: rtl;
     text-align: right;
     font-family: 'Vazirmatn', 'Poppins', sans-serif;
     background: linear-gradient(180deg, #f5f9ea 0%, #ffffff 200px);
+    unicode-bidi: plaintext;
+}
+
+body.rtl-body *,
+body.rtl-body *::before,
+body.rtl-body *::after {
+    box-sizing: border-box;
+}
+
+body.rtl-body p,
+body.rtl-body h1,
+body.rtl-body h2,
+body.rtl-body h3,
+body.rtl-body h4,
+body.rtl-body h5,
+body.rtl-body h6,
+body.rtl-body .section-title,
+body.rtl-body .news-info,
+body.rtl-body .about-info,
+body.rtl-body .footer-thumb,
+body.rtl-body .team-info,
+body.rtl-body .author-info,
+body.rtl-body .module-form,
+body.rtl-body .table,
+body.rtl-body .alert,
+body.rtl-body label,
+body.rtl-body .field-help,
+body.rtl-body .help-block {
+    text-align: right !important;
+}
+
+body.rtl-body ul,
+body.rtl-body ol {
+    padding-right: 18px;
+    padding-left: 0;
+}
+
+body.rtl-body .text-left {
+    text-align: right !important;
+}
+
+body.rtl-body .pull-left {
+    float: right !important;
 }
 
 .site-header {
@@ -20,6 +67,38 @@ body.rtl-body {
 
 .navbar-brand {
     font-weight: 700;
+}
+
+body.rtl-body .navbar-header,
+body.rtl-body .navbar-brand,
+body.rtl-body .navbar-nav,
+body.rtl-body .navbar-nav > li {
+    float: right;
+}
+
+body.rtl-body .navbar-nav.navbar-right:last-child {
+    margin-right: 0;
+    margin-left: 0;
+}
+
+body.rtl-body .navbar-nav > li > a {
+    text-align: right;
+}
+
+body.rtl-body .dropdown-menu {
+    right: 0;
+    left: auto;
+    text-align: right;
+}
+
+body.rtl-body .phone-icon i,
+body.rtl-body .date-icon i,
+body.rtl-body .email-icon i,
+body.rtl-body .navbar-brand i,
+body.rtl-body .btn i,
+body.rtl-body .section-btn i {
+    margin-left: 6px;
+    margin-right: 0;
 }
 
 .app-shell {
@@ -56,6 +135,43 @@ body.rtl-body {
     box-shadow: 0 14px 30px rgba(63, 78, 35, 0.08);
 }
 
+body.rtl-body .form-control,
+body.rtl-body input,
+body.rtl-body textarea,
+body.rtl-body select {
+    direction: rtl;
+    text-align: right;
+}
+
+body.rtl-body input::placeholder,
+body.rtl-body textarea::placeholder {
+    text-align: right;
+}
+
+body.rtl-body input[type='date'],
+body.rtl-body input[type='time'],
+body.rtl-body input[type='number'],
+body.rtl-body input[type='email'],
+body.rtl-body input[type='url'],
+body.rtl-body input[type='tel'] {
+    direction: ltr;
+    text-align: left;
+}
+
+body.rtl-body .table > thead > tr > th,
+body.rtl-body .table > tbody > tr > td,
+body.rtl-body .table > tfoot > tr > td {
+    text-align: right;
+}
+
+body.rtl-body .pagination {
+    padding-right: 0;
+}
+
+body.rtl-body .pagination > li {
+    float: right;
+}
+
 .module-form {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -87,6 +203,11 @@ body.rtl-body {
     border-radius: 20px;
     padding: 6px 10px;
     font-size: 13px;
+}
+
+body.rtl-body .inline-checks label input[type='checkbox'] {
+    margin-left: 6px;
+    margin-right: 0;
 }
 
 .actions-cell {
@@ -198,5 +319,11 @@ body.rtl-body {
 
     .contract-meta {
         grid-template-columns: 1fr;
+    }
+}
+
+@media (min-width: 768px) {
+    body.rtl-body .navbar-right {
+        float: right !important;
     }
 }
