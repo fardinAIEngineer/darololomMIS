@@ -377,7 +377,7 @@ final class TeachersController extends Controller
             'classes' => $db->query('SELECT * FROM school_classes ORDER BY name')->fetchAll(),
             'subjects' => $db->query('SELECT * FROM subjects ORDER BY name')->fetchAll(),
             'levels' => $db->query('SELECT * FROM study_levels ORDER BY id')->fetchAll(),
-            'semesters' => $db->query('SELECT * FROM semesters ORDER BY number')->fetchAll(),
+            'semesters' => $db->query('SELECT * FROM semesters WHERE number BETWEEN 1 AND 4 ORDER BY number')->fetchAll(),
             'periods' => $db->query('SELECT * FROM course_periods ORDER BY number')->fetchAll(),
         ];
     }

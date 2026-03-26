@@ -62,19 +62,17 @@ final class ClassesController extends Controller
     public function store(array $params = []): void
     {
         $this->csrfCheck();
-        $name = trim((string) ($_POST['name'] ?? ''));
-
-        if ($name === '') {
+        $validation = $this->validateClassInput();
+        if (!$validation['valid']) {
             with_old($_POST);
-            flash('error', 'نام صنف الزامی است.');
+            flash('error', $validation['error']);
             $this->redirect('/classes/create');
         }
 
         $db = Database::connection();
         $stmt = $db->prepare('INSERT INTO school_classes (name, level_id, semester_id, period_id, created_at)
             VALUES (:name, :level_id, :semester_id, :period_id, NOW())');
-
-        $stmt->execute($this->payload());
+        $stmt->execute($validation['payload']);
 
         flash('success', 'صنف ثبت شد.');
         $this->redirect('/classes');
@@ -107,16 +105,15 @@ final class ClassesController extends Controller
     {
         $this->csrfCheck();
         $id = $this->intParam($params, 'id');
-        $name = trim((string) ($_POST['name'] ?? ''));
-
-        if ($name === '') {
+        $validation = $this->validateClassInput();
+        if (!$validation['valid']) {
             with_old($_POST);
-            flash('error', 'نام صنف الزامی است.');
+            flash('error', $validation['error']);
             $this->redirect('/classes/' . $id . '/edit');
         }
 
         $db = Database::connection();
-        $payload = $this->payload();
+        $payload = $validation['payload'];
         $payload['id'] = $id;
 
         $stmt = $db->prepare('UPDATE school_classes
@@ -169,13 +166,87 @@ final class ClassesController extends Controller
         ];
     }
 
-    private function payload(): array
+    private function validateClassInput(): array
     {
-        return [
-            'name' => trim((string) ($_POST['name'] ?? '')),
-            'level_id' => (int) ($_POST['level_id'] ?? 0) ?: null,
-            'semester_id' => (int) ($_POST['semester_id'] ?? 0) ?: null,
-            'period_id' => (int) ($_POST['period_id'] ?? 0) ?: null,
+        $db = Database::connection();
+        $name = trim((string) ($_POST['name'] ?? ''));
+        if ($name === '') {
+            return ['valid' => false, 'error' => 'نام صنف الزامی است.', 'payload' => []];
+        }
+
+        $levelId = (int) ($_POST['level_id'] ?? 0);
+        if ($levelId <= 0) {
+            return ['valid' => false, 'error' => 'سطح آموزشی را انتخاب کنید.', 'payload' => []];
+        }
+
+        $levelStmt = $db->prepare('SELECT id, code FROM study_levels WHERE id = :id LIMIT 1');
+        $levelStmt->execute(['id' => $levelId]);
+        $level = $levelStmt->fetch();
+        if (!$level) {
+            return ['valid' => false, 'error' => 'سطح آموزشی معتبر نیست.', 'payload' => []];
+        }
+
+        $levelCode = (string) ($level['code'] ?? '');
+        $payload = [
+            'name' => $name,
+            'level_id' => $levelId,
+            'semester_id' => null,
+            'period_id' => null,
         ];
+
+        if ($levelCode === 'aali') {
+            $aaliClass = (int) ($_POST['aali_class'] ?? 0);
+            if (!in_array($aaliClass, [13, 14], true)) {
+                return ['valid' => false, 'error' => 'برای سطح عالی، صنف ۱۳ یا صنف ۱۴ را انتخاب کنید.', 'payload' => []];
+            }
+
+            $semesterId = $this->ensureSemesterByNumber($db, $aaliClass);
+            if ($semesterId <= 0) {
+                return ['valid' => false, 'error' => 'ثبت صنف عالی ممکن نشد. دوباره تلاش کنید.', 'payload' => []];
+            }
+
+            $payload['semester_id'] = $semesterId;
+            return ['valid' => true, 'error' => '', 'payload' => $payload];
+        }
+
+        if ($levelCode === 'moteseta' || $levelCode === 'ebtedai') {
+            $periodId = (int) ($_POST['period_id'] ?? 0);
+            if ($periodId <= 0) {
+                return ['valid' => false, 'error' => 'برای سطح ابتداییه/متوسطه، دوره را انتخاب کنید.', 'payload' => []];
+            }
+
+            $periodStmt = $db->prepare('SELECT id, number FROM course_periods WHERE id = :id LIMIT 1');
+            $periodStmt->execute(['id' => $periodId]);
+            $period = $periodStmt->fetch();
+            if (!$period) {
+                return ['valid' => false, 'error' => 'دوره انتخاب‌شده معتبر نیست.', 'payload' => []];
+            }
+
+            $periodNumber = (int) ($period['number'] ?? 0);
+            if ($periodNumber < 1 || $periodNumber > 6) {
+                return ['valid' => false, 'error' => 'دوره باید بین ۱ تا ۶ باشد.', 'payload' => []];
+            }
+
+            $payload['period_id'] = $periodId;
+            return ['valid' => true, 'error' => '', 'payload' => $payload];
+        }
+
+        return ['valid' => false, 'error' => 'کد سطح آموزشی پشتیبانی نمی‌شود.', 'payload' => []];
+    }
+
+    private function ensureSemesterByNumber(\PDO $db, int $number): int
+    {
+        $selectStmt = $db->prepare('SELECT id FROM semesters WHERE number = :number LIMIT 1');
+        $selectStmt->execute(['number' => $number]);
+        $foundId = (int) ($selectStmt->fetchColumn() ?: 0);
+        if ($foundId > 0) {
+            return $foundId;
+        }
+
+        $insertStmt = $db->prepare('INSERT INTO semesters (number) VALUES (:number)');
+        $insertStmt->execute(['number' => $number]);
+
+        $selectStmt->execute(['number' => $number]);
+        return (int) ($selectStmt->fetchColumn() ?: 0);
     }
 }

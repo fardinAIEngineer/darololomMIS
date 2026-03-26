@@ -1,1 +1,67 @@
-/* module styles for classes */
+.classes-form-note,
+.field-help {
+    display: block;
+    color: #6e7b52;
+    margin-top: 4px;
+    font-size: 12px;
+}
+
+.class-form-actions {
+    justify-content: flex-start;
+    margin-top: 10px;
+    padding-top: 14px;
+    border-top: 1px solid #e3ebcb;
+}
+
+.class-form-actions .btn {
+    min-width: 148px;
+    border-radius: 999px;
+    padding: 11px 20px;
+    font-weight: 700;
+    letter-spacing: 0.2px;
+    transition: all 0.2s ease;
+}
+
+.class-form-actions .class-save-btn {
+    background: linear-gradient(135deg, #a5c422 0%, #7ea215 100%);
+    border: 1px solid #86ad18;
+    color: #ffffff !important;
+    box-shadow: 0 8px 20px rgba(126, 162, 21, 0.28);
+}
+
+.class-form-actions .class-save-btn:hover,
+.class-form-actions .class-save-btn:focus {
+    transform: translateY(-1px);
+    box-shadow: 0 12px 24px rgba(126, 162, 21, 0.32);
+}
+
+.class-form-actions .class-cancel-btn {
+    background: #ffffff;
+    color: #55633a;
+    border: 1px solid #cad8a4;
+}
+
+.class-form-actions .class-cancel-btn:hover,
+.class-form-actions .class-cancel-btn:focus {
+    background: #f4f8e8;
+    border-color: #b5c88b;
+    color: #465231;
+}
+
+.class-form-actions .btn:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(165, 196, 34, 0.22);
+}
+
+@media (max-width: 767px) {
+    .class-form-actions {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .class-form-actions .btn {
+        width: 100%;
+        min-width: 0;
+        text-align: center;
+    }
+}

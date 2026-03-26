@@ -195,7 +195,7 @@ INSERT INTO study_levels (code, name) VALUES
     ('ebtedai', 'ابتداییه')
 ON DUPLICATE KEY UPDATE name = VALUES(name);
 
-INSERT INTO semesters (number) VALUES (1), (2), (3), (4)
+INSERT INTO semesters (number) VALUES (1), (2), (3), (4), (13), (14)
 ON DUPLICATE KEY UPDATE number = VALUES(number);
 
 INSERT INTO course_periods (number) VALUES (1), (2), (3), (4), (5), (6)

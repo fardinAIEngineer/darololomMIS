@@ -454,7 +454,7 @@ final class StudentsController extends Controller
         return [
             'levels' => $db->query('SELECT * FROM study_levels ORDER BY id')->fetchAll(),
             'classes' => $db->query('SELECT sc.*, l.name AS level_name FROM school_classes sc LEFT JOIN study_levels l ON l.id = sc.level_id ORDER BY sc.name')->fetchAll(),
-            'semesters' => $db->query('SELECT * FROM semesters ORDER BY number')->fetchAll(),
+            'semesters' => $db->query('SELECT * FROM semesters WHERE number BETWEEN 1 AND 4 ORDER BY number')->fetchAll(),
             'periods' => $db->query('SELECT * FROM course_periods ORDER BY number')->fetchAll(),
         ];
     }
