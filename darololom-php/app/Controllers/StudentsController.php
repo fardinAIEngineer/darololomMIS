@@ -107,7 +107,6 @@ final class StudentsController extends Controller
 
     public function create(array $params = []): void
     {
-        clear_old();
         $this->render('students/form', [
             'title' => 'ثبت دانش‌آموز',
             'student' => null,
@@ -123,17 +122,26 @@ final class StudentsController extends Controller
         $this->csrfCheck();
         $db = Database::connection();
 
-        $name = trim((string) ($_POST['name'] ?? ''));
-        $levelId = (int) ($_POST['level_id'] ?? 0);
-
-        if ($name === '' || $levelId <= 0) {
+        $validation = $this->validateStudentInput(null, null);
+        if (!$validation['valid']) {
             with_old($_POST);
-            flash('error', 'نام و سطح آموزشی الزامی است.');
+            flash('error', $validation['error']);
             $this->redirect('/students/create');
         }
 
         $image = upload_file('image', 'students', ['jpg', 'jpeg', 'png', 'webp']);
         $certificate = upload_file('certificate_file', 'student_certificates', ['pdf']);
+
+        if ($this->isFileUploaded('image') && $image === null) {
+            with_old($_POST);
+            flash('error', 'آپلود عکس ناموفق بود. لطفاً دوباره تلاش کنید.');
+            $this->redirect('/students/create');
+        }
+        if ($this->isFileUploaded('certificate_file') && $certificate === null) {
+            with_old($_POST);
+            flash('error', 'آپلود شهادت‌نامه ناموفق بود. لطفاً دوباره تلاش کنید.');
+            $this->redirect('/students/create');
+        }
 
         $stmt = $db->prepare('INSERT INTO students (
             name, father_name, grandfather_name, birth_date, id_number, exam_number,
@@ -150,8 +158,8 @@ final class StudentsController extends Controller
         $stmt->execute($this->payload($image, $certificate));
         $studentId = (int) $db->lastInsertId();
 
-        $this->syncSemesters($studentId, $_POST['semester_ids'] ?? []);
-        $this->syncPeriods($studentId, $_POST['period_ids'] ?? []);
+        $this->syncSemesters($studentId, $validation['semester_ids']);
+        $this->syncPeriods($studentId, $validation['period_ids']);
 
         clear_old();
         flash('success', 'دانش‌آموز با موفقیت ثبت شد.');
@@ -160,7 +168,6 @@ final class StudentsController extends Controller
 
     public function edit(array $params = []): void
     {
-        clear_old();
         $id = $this->intParam($params, 'id');
         $db = Database::connection();
 
@@ -206,17 +213,26 @@ final class StudentsController extends Controller
             $this->redirect('/students');
         }
 
-        $name = trim((string) ($_POST['name'] ?? ''));
-        $levelId = (int) ($_POST['level_id'] ?? 0);
-
-        if ($name === '' || $levelId <= 0) {
+        $validation = $this->validateStudentInput($student, $id);
+        if (!$validation['valid']) {
             with_old($_POST);
-            flash('error', 'نام و سطح آموزشی الزامی است.');
+            flash('error', $validation['error']);
             $this->redirect('/students/' . $id . '/edit');
         }
 
         $image = upload_file('image', 'students', ['jpg', 'jpeg', 'png', 'webp']) ?: $student['image_path'];
         $certificate = upload_file('certificate_file', 'student_certificates', ['pdf']) ?: $student['certificate_file'];
+
+        if ($this->isFileUploaded('image') && $image === null) {
+            with_old($_POST);
+            flash('error', 'آپلود عکس ناموفق بود. لطفاً دوباره تلاش کنید.');
+            $this->redirect('/students/' . $id . '/edit');
+        }
+        if ($this->isFileUploaded('certificate_file') && $certificate === null) {
+            with_old($_POST);
+            flash('error', 'آپلود شهادت‌نامه ناموفق بود. لطفاً دوباره تلاش کنید.');
+            $this->redirect('/students/' . $id . '/edit');
+        }
 
         $payload = $this->payload($image, $certificate);
         $payload['id'] = $id;
@@ -248,9 +264,10 @@ final class StudentsController extends Controller
 
         $update->execute($payload);
 
-        $this->syncSemesters($id, $_POST['semester_ids'] ?? []);
-        $this->syncPeriods($id, $_POST['period_ids'] ?? []);
+        $this->syncSemesters($id, $validation['semester_ids']);
+        $this->syncPeriods($id, $validation['period_ids']);
 
+        clear_old();
         flash('success', 'اطلاعات دانش‌آموز بروزرسانی شد.');
         $this->redirect('/students');
     }
@@ -516,5 +533,248 @@ final class StudentsController extends Controller
         }
 
         return $map;
+    }
+
+    /**
+     * @return array{valid:bool,error:string,semester_ids:array<int>,period_ids:array<int>}
+     */
+    private function validateStudentInput(?array $existingStudent, ?int $studentId): array
+    {
+        $name = trim((string) ($_POST['name'] ?? ''));
+        $fatherName = trim((string) ($_POST['father_name'] ?? ''));
+        $grandfatherName = trim((string) ($_POST['grandfather_name'] ?? ''));
+        $birthDate = trim((string) ($_POST['birth_date'] ?? ''));
+        $idNumber = trim((string) ($_POST['id_number'] ?? ''));
+        $examNumber = trim((string) ($_POST['exam_number'] ?? ''));
+        $mobileNumber = trim((string) ($_POST['mobile_number'] ?? ''));
+        $currentAddress = trim((string) ($_POST['current_address'] ?? ''));
+        $permanentAddress = trim((string) ($_POST['permanent_address'] ?? ''));
+        $village = trim((string) ($_POST['village'] ?? ''));
+        $district = trim((string) ($_POST['district'] ?? ''));
+        $area = trim((string) ($_POST['area'] ?? ''));
+        $timeStart = trim((string) ($_POST['time_start'] ?? ''));
+        $timeEnd = trim((string) ($_POST['time_end'] ?? ''));
+        $certificateNumber = trim((string) ($_POST['certificate_number'] ?? ''));
+        $gender = (string) ($_POST['gender'] ?? '');
+        $levelId = (int) ($_POST['level_id'] ?? 0);
+        $schoolClassId = (int) ($_POST['school_class_id'] ?? 0);
+
+        if ($name === '' || mb_strlen($name) < 3 || mb_strlen($name) > 255) {
+            return ['valid' => false, 'error' => 'نام دانش‌آموز الزامی است (حداقل ۳ حرف).', 'semester_ids' => [], 'period_ids' => []];
+        }
+        if ($fatherName === '' || mb_strlen($fatherName) < 3 || mb_strlen($fatherName) > 255) {
+            return ['valid' => false, 'error' => 'نام پدر الزامی است (حداقل ۳ حرف).', 'semester_ids' => [], 'period_ids' => []];
+        }
+        if ($grandfatherName !== '' && mb_strlen($grandfatherName) > 255) {
+            return ['valid' => false, 'error' => 'نام پدر کلان بیشتر از حد مجاز است.', 'semester_ids' => [], 'period_ids' => []];
+        }
+        if (!$this->isValidDate($birthDate)) {
+            return ['valid' => false, 'error' => 'تاریخ تولد معتبر نیست. نمونه: 2006-08-15', 'semester_ids' => [], 'period_ids' => []];
+        }
+        if (!in_array($gender, ['male', 'female'], true)) {
+            return ['valid' => false, 'error' => 'جنسیت را انتخاب کنید.', 'semester_ids' => [], 'period_ids' => []];
+        }
+        if ($idNumber === '' || mb_strlen($idNumber) > 100 || !preg_match('/^[0-9A-Za-z\-\/\s]+$/u', $idNumber)) {
+            return ['valid' => false, 'error' => 'نمبر تذکره معتبر نیست.', 'semester_ids' => [], 'period_ids' => []];
+        }
+        if ($mobileNumber === '' || !preg_match('/^[0-9+\-\s]{7,20}$/', $mobileNumber)) {
+            return ['valid' => false, 'error' => 'شماره تماس معتبر نیست. نمونه: 0700123456', 'semester_ids' => [], 'period_ids' => []];
+        }
+        if ($currentAddress === '' || mb_strlen($currentAddress) < 2) {
+            return ['valid' => false, 'error' => 'نشانی فعلی را وارد کنید.', 'semester_ids' => [], 'period_ids' => []];
+        }
+        if ($permanentAddress === '' || mb_strlen($permanentAddress) < 2) {
+            return ['valid' => false, 'error' => 'نشانی دایمی را وارد کنید.', 'semester_ids' => [], 'period_ids' => []];
+        }
+        if ($village === '' || mb_strlen($village) > 150) {
+            return ['valid' => false, 'error' => 'قریه را درست وارد کنید.', 'semester_ids' => [], 'period_ids' => []];
+        }
+        if ($district === '' || mb_strlen($district) > 150) {
+            return ['valid' => false, 'error' => 'ولسوالی را درست وارد کنید.', 'semester_ids' => [], 'period_ids' => []];
+        }
+        if ($area === '' || mb_strlen($area) > 150) {
+            return ['valid' => false, 'error' => 'ناحیه را درست وارد کنید.', 'semester_ids' => [], 'period_ids' => []];
+        }
+
+        if ($timeStart !== '' && !$this->isValidTime($timeStart)) {
+            return ['valid' => false, 'error' => 'تایم آغاز معتبر نیست.', 'semester_ids' => [], 'period_ids' => []];
+        }
+        if ($timeEnd !== '' && !$this->isValidTime($timeEnd)) {
+            return ['valid' => false, 'error' => 'تایم ختم معتبر نیست.', 'semester_ids' => [], 'period_ids' => []];
+        }
+        if ($timeStart !== '' && $timeEnd !== '' && strcmp($timeStart, $timeEnd) >= 0) {
+            return ['valid' => false, 'error' => 'تایم ختم باید بعد از تایم آغاز باشد.', 'semester_ids' => [], 'period_ids' => []];
+        }
+
+        $db = Database::connection();
+
+        if ($levelId <= 0) {
+            return ['valid' => false, 'error' => 'سطح آموزشی را انتخاب کنید.', 'semester_ids' => [], 'period_ids' => []];
+        }
+
+        $levelStmt = $db->prepare('SELECT id, code FROM study_levels WHERE id = :id LIMIT 1');
+        $levelStmt->execute(['id' => $levelId]);
+        $level = $levelStmt->fetch();
+        if (!$level) {
+            return ['valid' => false, 'error' => 'سطح آموزشی معتبر نیست.', 'semester_ids' => [], 'period_ids' => []];
+        }
+        $levelCode = (string) $level['code'];
+
+        if ($schoolClassId > 0) {
+            $classStmt = $db->prepare('SELECT id, level_id FROM school_classes WHERE id = :id LIMIT 1');
+            $classStmt->execute(['id' => $schoolClassId]);
+            $classRow = $classStmt->fetch();
+            if (!$classRow) {
+                return ['valid' => false, 'error' => 'صنف انتخاب‌شده معتبر نیست.', 'semester_ids' => [], 'period_ids' => []];
+            }
+            if ((int) ($classRow['level_id'] ?? 0) > 0 && (int) $classRow['level_id'] !== $levelId) {
+                return ['valid' => false, 'error' => 'سطح صنف با سطح آموزشی انتخاب‌شده مطابقت ندارد.', 'semester_ids' => [], 'period_ids' => []];
+            }
+        }
+
+        $semesterIds = $this->normalizeIdArray($_POST['semester_ids'] ?? []);
+        $periodIds = $this->normalizeIdArray($_POST['period_ids'] ?? []);
+
+        if ($semesterIds !== [] && !$this->allIdsExist('semesters', $semesterIds)) {
+            return ['valid' => false, 'error' => 'سمسترهای انتخاب‌شده معتبر نیست.', 'semester_ids' => [], 'period_ids' => []];
+        }
+        if ($periodIds !== [] && !$this->allIdsExist('course_periods', $periodIds)) {
+            return ['valid' => false, 'error' => 'دوره‌های انتخاب‌شده معتبر نیست.', 'semester_ids' => [], 'period_ids' => []];
+        }
+
+        $imageValidation = $this->validateUploadedFile('image', ['jpg', 'jpeg', 'png', 'webp'], 2 * 1024 * 1024, false, 'عکس');
+        if ($imageValidation !== null) {
+            return ['valid' => false, 'error' => $imageValidation, 'semester_ids' => [], 'period_ids' => []];
+        }
+
+        $certificateRequired = $levelCode === 'aali' && empty($existingStudent['certificate_file']);
+        $certificateValidation = $this->validateUploadedFile('certificate_file', ['pdf'], 5 * 1024 * 1024, $certificateRequired, 'شهادت‌نامه');
+        if ($certificateValidation !== null) {
+            return ['valid' => false, 'error' => $certificateValidation, 'semester_ids' => [], 'period_ids' => []];
+        }
+
+        if ($levelCode === 'aali') {
+            if (!isset($_POST['is_grade12_graduate'])) {
+                return ['valid' => false, 'error' => 'برای سطح عالی، گزینه فارغ صنف دوازدهم باید فعال باشد.', 'semester_ids' => [], 'period_ids' => []];
+            }
+            if ($examNumber === '' || mb_strlen($examNumber) > 100 || !preg_match('/^[0-9A-Za-z\-\/\s]+$/u', $examNumber)) {
+                return ['valid' => false, 'error' => 'برای سطح عالی، نمبر کانکور الزامی و معتبر است.', 'semester_ids' => [], 'period_ids' => []];
+            }
+            if (count($semesterIds) !== 1) {
+                return ['valid' => false, 'error' => 'برای سطح عالی دقیقاً یک سمستر انتخاب کنید.', 'semester_ids' => [], 'period_ids' => []];
+            }
+        } else {
+            if (count($periodIds) !== 1) {
+                return ['valid' => false, 'error' => 'برای ابتداییه/متوسطه دقیقاً یک دوره انتخاب کنید.', 'semester_ids' => [], 'period_ids' => []];
+            }
+        }
+
+        if ($certificateNumber !== '') {
+            if (mb_strlen($certificateNumber) > 50 || !preg_match('/^[0-9A-Za-z\-\/]+$/', $certificateNumber)) {
+                return ['valid' => false, 'error' => 'شماره سرتفیکت معتبر نیست.', 'semester_ids' => [], 'period_ids' => []];
+            }
+
+            if ($this->certificateNumberExists($certificateNumber, $studentId)) {
+                return ['valid' => false, 'error' => 'شماره سرتفیکت تکراری است.', 'semester_ids' => [], 'period_ids' => []];
+            }
+        }
+
+        return [
+            'valid' => true,
+            'error' => '',
+            'semester_ids' => $levelCode === 'aali' ? $semesterIds : [],
+            'period_ids' => $levelCode === 'aali' ? [] : $periodIds,
+        ];
+    }
+
+    private function normalizeIdArray(mixed $input): array
+    {
+        if (!is_array($input)) {
+            return [];
+        }
+
+        $normalized = [];
+        foreach ($input as $value) {
+            $id = (int) $value;
+            if ($id > 0) {
+                $normalized[$id] = $id;
+            }
+        }
+        return array_values($normalized);
+    }
+
+    private function allIdsExist(string $table, array $ids): bool
+    {
+        if ($ids === []) {
+            return true;
+        }
+
+        $db = Database::connection();
+        $placeholders = implode(',', array_fill(0, count($ids), '?'));
+        $stmt = $db->prepare("SELECT COUNT(*) FROM {$table} WHERE id IN ($placeholders)");
+        $stmt->execute($ids);
+        return (int) $stmt->fetchColumn() === count($ids);
+    }
+
+    private function certificateNumberExists(string $certificateNumber, ?int $studentId): bool
+    {
+        $db = Database::connection();
+
+        if ($studentId === null) {
+            $stmt = $db->prepare('SELECT id FROM students WHERE certificate_number = :certificate_number LIMIT 1');
+            $stmt->execute(['certificate_number' => $certificateNumber]);
+            return (bool) $stmt->fetch();
+        }
+
+        $stmt = $db->prepare('SELECT id FROM students WHERE certificate_number = :certificate_number AND id <> :student_id LIMIT 1');
+        $stmt->execute([
+            'certificate_number' => $certificateNumber,
+            'student_id' => $studentId,
+        ]);
+        return (bool) $stmt->fetch();
+    }
+
+    private function isValidDate(string $date): bool
+    {
+        if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $date)) {
+            return false;
+        }
+        [$year, $month, $day] = array_map('intval', explode('-', $date));
+        return checkdate($month, $day, $year);
+    }
+
+    private function isValidTime(string $time): bool
+    {
+        return (bool) preg_match('/^\d{2}:\d{2}$/', $time);
+    }
+
+    private function isFileUploaded(string $field): bool
+    {
+        return isset($_FILES[$field]) && (int) ($_FILES[$field]['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_NO_FILE;
+    }
+
+    private function validateUploadedFile(string $field, array $allowedExtensions, int $maxBytes, bool $required, string $label): ?string
+    {
+        if (!isset($_FILES[$field]) || (int) ($_FILES[$field]['error'] ?? UPLOAD_ERR_NO_FILE) === UPLOAD_ERR_NO_FILE) {
+            return $required ? "{$label} الزامی است." : null;
+        }
+
+        $error = (int) ($_FILES[$field]['error'] ?? UPLOAD_ERR_OK);
+        if ($error !== UPLOAD_ERR_OK) {
+            return "آپلود {$label} ناموفق بود.";
+        }
+
+        $name = strtolower((string) ($_FILES[$field]['name'] ?? ''));
+        $ext = pathinfo($name, PATHINFO_EXTENSION);
+        if ($ext === '' || !in_array($ext, $allowedExtensions, true)) {
+            return "فرمت {$label} مجاز نیست.";
+        }
+
+        $size = (int) ($_FILES[$field]['size'] ?? 0);
+        if ($size > $maxBytes) {
+            return "حجم {$label} بیش از حد مجاز است.";
+        }
+
+        return null;
     }
 }

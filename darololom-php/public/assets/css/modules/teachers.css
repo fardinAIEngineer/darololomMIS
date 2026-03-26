@@ -3,6 +3,20 @@
     vertical-align: middle !important;
 }
 
+.teacher-form-grid {
+    grid-template-columns: 1fr;
+}
+
+.teacher-wizard-wrap {
+    border: 1px solid #e9f0d8;
+}
+
 .teacher-form-grid .form-group {
     min-height: 76px;
+}
+
+@media (max-width: 991px) {
+    .teacher-form-grid .form-group {
+        min-height: auto;
+    }
 }
