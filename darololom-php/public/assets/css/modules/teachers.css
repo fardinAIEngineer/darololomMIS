@@ -1,0 +1,8 @@
+.teacher-table td,
+.teacher-table th {
+    vertical-align: middle !important;
+}
+
+.teacher-form-grid .form-group {
+    min-height: 76px;
+}

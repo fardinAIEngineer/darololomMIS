@@ -1,0 +1,104 @@
+<?php declare(strict_types=1); ?>
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title><?= e(($title ?? 'سیستم مدیریت') . ' | ' . config('app_name')) ?></title>
+
+    <link rel="stylesheet" href="<?= e(url('/assets/health/css/bootstrap.min.css')) ?>">
+    <link rel="stylesheet" href="<?= e(url('/assets/health/css/font-awesome.min.css')) ?>">
+    <link rel="stylesheet" href="<?= e(url('/assets/health/css/animate.css')) ?>">
+    <link rel="stylesheet" href="<?= e(url('/assets/health/css/tooplate-style.css')) ?>">
+    <link rel="stylesheet" href="<?= e(url('/assets/css/app.css')) ?>">
+    <link rel="stylesheet" href="<?= e(url('/assets/css/modules/dashboard.css')) ?>">
+    <link rel="stylesheet" href="<?= e(url('/assets/css/modules/students.css')) ?>">
+    <link rel="stylesheet" href="<?= e(url('/assets/css/modules/teachers.css')) ?>">
+    <link rel="stylesheet" href="<?= e(url('/assets/css/modules/classes.css')) ?>">
+    <link rel="stylesheet" href="<?= e(url('/assets/css/modules/subjects.css')) ?>">
+    <link rel="stylesheet" href="<?= e(url('/assets/css/modules/grades.css')) ?>">
+    <link rel="stylesheet" href="<?= e(url('/assets/css/modules/contracts.css')) ?>">
+</head>
+<body id="top" class="rtl-body">
+    <section class="preloader">
+        <div class="spinner"><span class="spinner-rotate"></span></div>
+    </section>
+
+    <header class="site-header">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-4 col-sm-5">
+                    <p>سیستم مدیریت اطلاعات دارالعلوم عالی الحاج سید منصور نادری</p>
+                </div>
+                <div class="col-md-8 col-sm-7 text-align-right">
+                    <span class="phone-icon"><i class="fa fa-phone"></i> 0700-000000</span>
+                    <span class="date-icon"><i class="fa fa-calendar-plus-o"></i> شنبه تا پنج‌شنبه</span>
+                    <span class="email-icon"><i class="fa fa-envelope-o"></i> <a href="#">info@darololom.local</a></span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <section class="navbar navbar-default navbar-static-top" role="navigation">
+        <div class="container">
+            <div class="navbar-header">
+                <button class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+                    <span class="icon icon-bar"></span>
+                    <span class="icon icon-bar"></span>
+                    <span class="icon icon-bar"></span>
+                </button>
+                <a href="<?= e(url('/')) ?>" class="navbar-brand"><i class="fa fa-h-square"></i>DarolOlom MIS</a>
+            </div>
+            <div class="collapse navbar-collapse">
+                <ul class="nav navbar-nav navbar-right">
+                    <li><a href="<?= e(url('/')) ?>">داشبورد</a></li>
+                    <li><a href="<?= e(url('/students')) ?>">دانش‌آموزان</a></li>
+                    <li><a href="<?= e(url('/teachers')) ?>">اساتید</a></li>
+                    <li><a href="<?= e(url('/classes')) ?>">صنوف</a></li>
+                    <li><a href="<?= e(url('/subjects')) ?>">مضامین</a></li>
+                    <li><a href="<?= e(url('/grades')) ?>">نمرات</a></li>
+                </ul>
+            </div>
+        </div>
+    </section>
+
+    <main class="app-shell" id="news">
+        <div class="container">
+            <?php if ($msg = flash('success')): ?>
+                <div class="alert alert-success"><?= e($msg) ?></div>
+            <?php endif; ?>
+            <?php if ($msg = flash('error')): ?>
+                <div class="alert alert-danger"><?= e($msg) ?></div>
+            <?php endif; ?>
+            <?= $content ?>
+        </div>
+    </main>
+
+    <footer data-stellar-background-ratio="5">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-8 col-sm-6">
+                    <div class="footer-thumb">
+                        <h4 class="wow fadeInUp" data-wow-delay="0.4s">DarolOlom MIS - PHP/MySQL</h4>
+                        <p>بازنویسی کامل سیستم با معماری ماژولار PHP و ظاهر یک‌دست مبتنی بر قالب health.</p>
+                    </div>
+                </div>
+                <div class="col-md-4 col-sm-6 text-align-right">
+                    <div class="footer-thumb">
+                        <h4 class="wow fadeInUp" data-wow-delay="0.4s">نسخه</h4>
+                        <p>© <?= date('Y') ?> همه حقوق محفوظ است.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script src="<?= e(url('/assets/health/js/jquery.js')) ?>"></script>
+    <script src="<?= e(url('/assets/health/js/bootstrap.min.js')) ?>"></script>
+    <script src="<?= e(url('/assets/health/js/wow.min.js')) ?>"></script>
+    <script src="<?= e(url('/assets/health/js/smoothscroll.js')) ?>"></script>
+    <script src="<?= e(url('/assets/health/js/custom.js')) ?>"></script>
+    <script src="<?= e(url('/assets/js/app.js')) ?>"></script>
+</body>
+</html>

@@ -1,0 +1,11 @@
+.student-table td,
+.student-table th {
+    vertical-align: middle !important;
+}
+
+.student-form-grid .check-group {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 8px;
+}

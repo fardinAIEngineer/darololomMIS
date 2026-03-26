@@ -1,0 +1,53 @@
+<?php
+
+declare(strict_types=1);
+
+use App\Core\Router;
+
+return static function (Router $router): void {
+    $router->get('/', 'DashboardController@index');
+
+    $router->get('/students', 'StudentsController@index');
+    $router->get('/students/create', 'StudentsController@create');
+    $router->post('/students/store', 'StudentsController@store');
+    $router->get('/students/{id}/edit', 'StudentsController@edit');
+    $router->post('/students/{id}/update', 'StudentsController@update');
+    $router->post('/students/{id}/delete', 'StudentsController@destroy');
+    $router->post('/students/{id}/behavior', 'StudentsController@addBehavior');
+    $router->post('/students/behavior/{id}/delete', 'StudentsController@deleteBehavior');
+    $router->get('/students/{id}/results', 'StudentsController@results');
+    $router->get('/students/{id}/certificate', 'StudentsController@certificate');
+    $router->get('/students/{id}/appreciation', 'StudentsController@appreciation');
+    $router->post('/students/{id}/promote/moteseta', 'StudentsController@promoteToMoteseta');
+
+    $router->get('/teachers', 'TeachersController@index');
+    $router->get('/teachers/create', 'TeachersController@create');
+    $router->post('/teachers/store', 'TeachersController@store');
+    $router->get('/teachers/{id}/edit', 'TeachersController@edit');
+    $router->post('/teachers/{id}/update', 'TeachersController@update');
+    $router->post('/teachers/{id}/delete', 'TeachersController@destroy');
+    $router->post('/teachers/{id}/behavior', 'TeachersController@addBehavior');
+    $router->post('/teachers/behavior/{id}/delete', 'TeachersController@deleteBehavior');
+    $router->get('/teachers/{id}/appreciation', 'TeachersController@appreciation');
+
+    $router->get('/classes', 'ClassesController@index');
+    $router->get('/classes/create', 'ClassesController@create');
+    $router->post('/classes/store', 'ClassesController@store');
+    $router->get('/classes/{id}/edit', 'ClassesController@edit');
+    $router->post('/classes/{id}/update', 'ClassesController@update');
+    $router->post('/classes/{id}/delete', 'ClassesController@destroy');
+    $router->get('/api/classes/search', 'ClassesController@apiSearch');
+
+    $router->get('/subjects', 'SubjectsController@index');
+    $router->get('/subjects/create', 'SubjectsController@create');
+    $router->post('/subjects/store', 'SubjectsController@store');
+    $router->get('/subjects/{id}/edit', 'SubjectsController@edit');
+    $router->post('/subjects/{id}/update', 'SubjectsController@update');
+    $router->post('/subjects/{id}/delete', 'SubjectsController@destroy');
+
+    $router->get('/grades', 'GradesController@index');
+    $router->post('/grades/store', 'GradesController@store');
+
+    $router->get('/contracts/{teacherId}', 'ContractsController@show');
+    $router->post('/contracts/{teacherId}/save', 'ContractsController@save');
+};
