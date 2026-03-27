@@ -59,32 +59,38 @@ $totalPages = max(1, (int) ceil($total / max(1, $pageSize)));
                     </td>
                     <td><?= e((string) ($student['merit_count'] ?? 0)) ?></td>
                     <td class="actions-cell">
-                        <a class="btn btn-xs btn-info" href="<?= e(url('/students/' . $student['id'] . '/edit')) ?>">ویرایش</a>
+                        <?php if (can('manage_students')): ?>
+                            <a class="btn btn-xs btn-info" href="<?= e(url('/students/' . $student['id'] . '/edit')) ?>">ویرایش</a>
+                        <?php endif; ?>
                         <a class="btn btn-xs btn-success" href="<?= e(url('/students/' . $student['id'] . '/results')) ?>">نتایج</a>
                         <a class="btn btn-xs btn-primary" href="<?= e(url('/students/' . $student['id'] . '/appreciation')) ?>" target="_blank">تقدیرنامه</a>
                         <a class="btn btn-xs btn-warning" href="<?= e(url('/students/' . $student['id'] . '/certificate')) ?>">سرتفیکت</a>
-                        <form method="post" action="<?= e(url('/students/' . $student['id'] . '/promote/moteseta')) ?>" onsubmit="return confirm('دانش‌آموز به متوسطه ارتقا یابد؟');">
-                            <?= csrf_field() ?>
-                            <button class="btn btn-xs btn-default" type="submit">ارتقا به متوسطه</button>
-                        </form>
-                        <form method="post" action="<?= e(url('/students/' . $student['id'] . '/delete')) ?>" onsubmit="return confirm('آیا مطمئن هستید؟');">
-                            <?= csrf_field() ?>
-                            <button class="btn btn-xs btn-danger" type="submit">حذف</button>
-                        </form>
+                        <?php if (can('manage_students')): ?>
+                            <form method="post" action="<?= e(url('/students/' . $student['id'] . '/promote/moteseta')) ?>" onsubmit="return confirm('دانش‌آموز به متوسطه ارتقا یابد؟');">
+                                <?= csrf_field() ?>
+                                <button class="btn btn-xs btn-default" type="submit">ارتقا به متوسطه</button>
+                            </form>
+                            <form method="post" action="<?= e(url('/students/' . $student['id'] . '/delete')) ?>" onsubmit="return confirm('آیا مطمئن هستید؟');">
+                                <?= csrf_field() ?>
+                                <button class="btn btn-xs btn-danger" type="submit">حذف</button>
+                            </form>
+                        <?php endif; ?>
                     </td>
                 </tr>
                 <tr class="behavior-row">
                     <td colspan="7">
                         <div class="behavior-grid">
-                            <form class="behavior-form" method="post" action="<?= e(url('/students/' . $student['id'] . '/behavior')) ?>">
-                                <?= csrf_field() ?>
-                                <select name="entry_type" class="form-control" required>
-                                    <option value="merit">امتیاز</option>
-                                    <option value="violation">تخلف</option>
-                                </select>
-                                <input type="text" name="note" class="form-control" placeholder="یادداشت">
-                                <button class="btn btn-default btn-sm" type="submit">ثبت</button>
-                            </form>
+                            <?php if (can('manage_students')): ?>
+                                <form class="behavior-form" method="post" action="<?= e(url('/students/' . $student['id'] . '/behavior')) ?>">
+                                    <?= csrf_field() ?>
+                                    <select name="entry_type" class="form-control" required>
+                                        <option value="merit">امتیاز</option>
+                                        <option value="violation">تخلف</option>
+                                    </select>
+                                    <input type="text" name="note" class="form-control" placeholder="یادداشت">
+                                    <button class="btn btn-default btn-sm" type="submit">ثبت</button>
+                                </form>
+                            <?php endif; ?>
 
                             <div class="behavior-list">
                                 <?php foreach (($behaviors[$student['id']] ?? []) as $entry): ?>
@@ -93,10 +99,12 @@ $totalPages = max(1, (int) ceil($total / max(1, $pageSize)));
                                             <?= $entry['entry_type'] === 'merit' ? 'امتیاز' : 'تخلف' ?>:
                                             <?= e($entry['note'] ?: '—') ?>
                                         </span>
-                                        <form method="post" action="<?= e(url('/students/behavior/' . $entry['id'] . '/delete')) ?>">
-                                            <?= csrf_field() ?>
-                                            <button class="btn btn-xs btn-link" type="submit">حذف</button>
-                                        </form>
+                                        <?php if (can('manage_students')): ?>
+                                            <form method="post" action="<?= e(url('/students/behavior/' . $entry['id'] . '/delete')) ?>">
+                                                <?= csrf_field() ?>
+                                                <button class="btn btn-xs btn-link" type="submit">حذف</button>
+                                            </form>
+                                        <?php endif; ?>
                                     </div>
                                 <?php endforeach; ?>
                             </div>

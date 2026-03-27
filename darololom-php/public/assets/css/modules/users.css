@@ -11,6 +11,10 @@
     vertical-align: middle !important;
 }
 
+.users-table td {
+    line-height: 1.7;
+}
+
 @media (max-width: 767px) {
     .users-form {
         grid-template-columns: 1fr;

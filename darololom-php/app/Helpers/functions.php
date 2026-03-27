@@ -102,6 +102,7 @@ function auth_login(array $user): void
         'full_name' => (string) ($user['full_name'] ?? ''),
         'username' => (string) ($user['username'] ?? ''),
         'role' => (string) ($user['role'] ?? 'admin'),
+        'permissions' => $user['permissions'] ?? '[]',
         'can_register_students' => (int) ($user['can_register_students'] ?? 0),
         'can_register_teachers' => (int) ($user['can_register_teachers'] ?? 0),
     ];
@@ -119,22 +120,74 @@ function is_super_admin(): bool
     return (string) ($user['role'] ?? '') === 'super_admin';
 }
 
+function permission_definitions(): array
+{
+    return [
+        'access_students' => 'دسترسی به بخش شاگردان',
+        'register_students' => 'ثبت شاگردان',
+        'manage_students' => 'ویرایش/حذف شاگردان',
+        'access_teachers' => 'دسترسی به بخش اساتید',
+        'register_teachers' => 'ثبت اساتید',
+        'manage_teachers' => 'ویرایش/حذف اساتید',
+        'manage_classes' => 'مدیریت صنوف',
+        'manage_subjects' => 'مدیریت مضامین',
+        'manage_grades' => 'مدیریت نمرات',
+        'manage_contracts' => 'مدیریت قراردادها',
+        'manage_users' => 'مدیریت کاربران',
+    ];
+}
+
+function user_permission_keys(?array $user = null): array
+{
+    $user ??= auth_user();
+    if (!$user) {
+        return [];
+    }
+
+    $definitions = permission_definitions();
+    $keys = [];
+
+    $raw = $user['permissions'] ?? null;
+    if (is_string($raw) && $raw !== '') {
+        $decoded = json_decode($raw, true);
+        if (is_array($decoded)) {
+            foreach ($decoded as $item) {
+                $key = (string) $item;
+                if ($key !== '' && array_key_exists($key, $definitions)) {
+                    $keys[] = $key;
+                }
+            }
+        }
+    } elseif (is_array($raw)) {
+        foreach ($raw as $item) {
+            $key = (string) $item;
+            if ($key !== '' && array_key_exists($key, $definitions)) {
+                $keys[] = $key;
+            }
+        }
+    }
+
+    if ((int) ($user['can_register_students'] ?? 0) === 1) {
+        $keys[] = 'register_students';
+    }
+    if ((int) ($user['can_register_teachers'] ?? 0) === 1) {
+        $keys[] = 'register_teachers';
+    }
+
+    return array_values(array_unique($keys));
+}
+
 function can(string $permission): bool
 {
     if (is_super_admin()) {
         return true;
     }
 
-    $user = auth_user();
-    if (!$user) {
+    if (!array_key_exists($permission, permission_definitions())) {
         return false;
     }
 
-    return match ($permission) {
-        'register_students' => (int) ($user['can_register_students'] ?? 0) === 1,
-        'register_teachers' => (int) ($user['can_register_teachers'] ?? 0) === 1,
-        default => false,
-    };
+    return in_array($permission, user_permission_keys(), true);
 }
 
 function paginated_sizes(): array

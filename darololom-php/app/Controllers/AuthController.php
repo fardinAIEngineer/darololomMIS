@@ -34,7 +34,7 @@ final class AuthController extends Controller
         }
 
         $db = Database::connection();
-        $stmt = $db->prepare('SELECT id, full_name, username, password_hash, role, can_register_students, can_register_teachers, is_active
+        $stmt = $db->prepare('SELECT id, full_name, username, password_hash, role, permissions, can_register_students, can_register_teachers, is_active
             FROM users
             WHERE username = :username
             LIMIT 1');

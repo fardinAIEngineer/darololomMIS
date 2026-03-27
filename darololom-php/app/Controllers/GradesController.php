@@ -11,6 +11,7 @@ final class GradesController extends Controller
 {
     public function index(array $params = []): void
     {
+        $this->authorize('manage_grades', 'شما اجازه مدیریت نمرات را ندارید.');
         clear_old();
         $db = Database::connection();
 
@@ -45,6 +46,7 @@ final class GradesController extends Controller
 
     public function store(array $params = []): void
     {
+        $this->authorize('manage_grades', 'شما اجازه ثبت نمرات را ندارید.', '/');
         $this->csrfCheck();
         $db = Database::connection();
 

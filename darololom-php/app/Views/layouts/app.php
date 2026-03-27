@@ -61,12 +61,22 @@ $isLoggedIn = $currentUser !== null;
                 <ul class="nav navbar-nav navbar-right">
                     <?php if ($isLoggedIn): ?>
                         <li><a href="<?= e(url('/')) ?>">داشبورد</a></li>
-                        <li><a href="<?= e(url('/students')) ?>">دانش‌آموزان</a></li>
-                        <li><a href="<?= e(url('/teachers')) ?>">اساتید</a></li>
-                        <li><a href="<?= e(url('/classes')) ?>">صنوف</a></li>
-                        <li><a href="<?= e(url('/subjects')) ?>">مضامین</a></li>
-                        <li><a href="<?= e(url('/grades')) ?>">نمرات</a></li>
-                        <?php if (is_super_admin()): ?>
+                        <?php if (can('access_students')): ?>
+                            <li><a href="<?= e(url('/students')) ?>">دانش‌آموزان</a></li>
+                        <?php endif; ?>
+                        <?php if (can('access_teachers')): ?>
+                            <li><a href="<?= e(url('/teachers')) ?>">اساتید</a></li>
+                        <?php endif; ?>
+                        <?php if (can('manage_classes')): ?>
+                            <li><a href="<?= e(url('/classes')) ?>">صنوف</a></li>
+                        <?php endif; ?>
+                        <?php if (can('manage_subjects')): ?>
+                            <li><a href="<?= e(url('/subjects')) ?>">مضامین</a></li>
+                        <?php endif; ?>
+                        <?php if (can('manage_grades')): ?>
+                            <li><a href="<?= e(url('/grades')) ?>">نمرات</a></li>
+                        <?php endif; ?>
+                        <?php if (can('manage_users')): ?>
                             <li><a href="<?= e(url('/users')) ?>">مدیریت کاربران</a></li>
                         <?php endif; ?>
                         <li class="nav-user-label"><span><i class="fa fa-user"></i><?= e((string) ($currentUser['full_name'] ?? $currentUser['username'] ?? 'کاربر')) ?></span></li>

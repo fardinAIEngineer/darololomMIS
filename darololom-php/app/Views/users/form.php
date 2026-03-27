@@ -1,6 +1,8 @@
 <?php
 $oldFullName = (string) old('full_name', '');
 $oldUsername = (string) old('username', '');
+$oldPermissionsRaw = old('permissions', []);
+$oldPermissions = is_array($oldPermissionsRaw) ? array_map(static fn ($item): string => (string) $item, $oldPermissionsRaw) : [];
 ?>
 
 <div class="section-title">
@@ -31,16 +33,14 @@ $oldUsername = (string) old('username', '');
             <div class="form-group full">
                 <label>صلاحیت‌ها</label>
                 <div class="inline-checks">
-                    <label>
-                        <input type="checkbox" name="can_register_students" value="1" <?= old('can_register_students') ? 'checked' : '' ?>>
-                        ثبت شاگردان
-                    </label>
-                    <label>
-                        <input type="checkbox" name="can_register_teachers" value="1" <?= old('can_register_teachers') ? 'checked' : '' ?>>
-                        ثبت اساتید
-                    </label>
+                    <?php foreach ($permissions as $key => $label): ?>
+                        <label>
+                            <input type="checkbox" name="permissions[]" value="<?= e((string) $key) ?>" <?= in_array((string) $key, $oldPermissions, true) ? 'checked' : '' ?>>
+                            <?= e((string) $label) ?>
+                        </label>
+                    <?php endforeach; ?>
                 </div>
-                <small class="field-help">کاربر با نقش ادمین ساخته می‌شود و فقط همین صلاحیت‌ها را می‌گیرد.</small>
+                <small class="field-help">تمام صلاحیت‌های انتخاب‌شده روی کاربر تطبیق می‌گردد. نقش کاربر: ادمین</small>
             </div>
 
             <div class="full form-actions users-actions">

@@ -50,27 +50,35 @@ $totalPages = max(1, (int) ceil($total / max(1, $pageSize)));
                     <td><?= e($teacher['subjects_display'] ?: '—') ?></td>
                     <td><?= e($teacher['classes_display'] ?: '—') ?></td>
                     <td class="actions-cell">
-                        <a class="btn btn-xs btn-info" href="<?= e(url('/teachers/' . $teacher['id'] . '/edit')) ?>">ویرایش</a>
-                        <a class="btn btn-xs btn-success" href="<?= e(url('/contracts/' . $teacher['id'])) ?>">قرارداد</a>
+                        <?php if (can('manage_teachers')): ?>
+                            <a class="btn btn-xs btn-info" href="<?= e(url('/teachers/' . $teacher['id'] . '/edit')) ?>">ویرایش</a>
+                        <?php endif; ?>
+                        <?php if (can('manage_contracts')): ?>
+                            <a class="btn btn-xs btn-success" href="<?= e(url('/contracts/' . $teacher['id'])) ?>">قرارداد</a>
+                        <?php endif; ?>
                         <a class="btn btn-xs btn-primary" href="<?= e(url('/teachers/' . $teacher['id'] . '/appreciation')) ?>" target="_blank">تقدیرنامه</a>
-                        <form method="post" action="<?= e(url('/teachers/' . $teacher['id'] . '/delete')) ?>" onsubmit="return confirm('آیا مطمئن هستید؟');">
-                            <?= csrf_field() ?>
-                            <button class="btn btn-xs btn-danger" type="submit">حذف</button>
-                        </form>
+                        <?php if (can('manage_teachers')): ?>
+                            <form method="post" action="<?= e(url('/teachers/' . $teacher['id'] . '/delete')) ?>" onsubmit="return confirm('آیا مطمئن هستید؟');">
+                                <?= csrf_field() ?>
+                                <button class="btn btn-xs btn-danger" type="submit">حذف</button>
+                            </form>
+                        <?php endif; ?>
                     </td>
                 </tr>
                 <tr class="behavior-row">
                     <td colspan="7">
                         <div class="behavior-grid">
-                            <form class="behavior-form" method="post" action="<?= e(url('/teachers/' . $teacher['id'] . '/behavior')) ?>">
-                                <?= csrf_field() ?>
-                                <select name="entry_type" class="form-control" required>
-                                    <option value="merit">امتیاز</option>
-                                    <option value="violation">تخلف</option>
-                                </select>
-                                <input type="text" name="note" class="form-control" placeholder="یادداشت">
-                                <button class="btn btn-default btn-sm" type="submit">ثبت</button>
-                            </form>
+                            <?php if (can('manage_teachers')): ?>
+                                <form class="behavior-form" method="post" action="<?= e(url('/teachers/' . $teacher['id'] . '/behavior')) ?>">
+                                    <?= csrf_field() ?>
+                                    <select name="entry_type" class="form-control" required>
+                                        <option value="merit">امتیاز</option>
+                                        <option value="violation">تخلف</option>
+                                    </select>
+                                    <input type="text" name="note" class="form-control" placeholder="یادداشت">
+                                    <button class="btn btn-default btn-sm" type="submit">ثبت</button>
+                                </form>
+                            <?php endif; ?>
 
                             <div class="behavior-list">
                                 <?php foreach (($behaviors[$teacher['id']] ?? []) as $entry): ?>
@@ -79,10 +87,12 @@ $totalPages = max(1, (int) ceil($total / max(1, $pageSize)));
                                             <?= $entry['entry_type'] === 'merit' ? 'امتیاز' : 'تخلف' ?>:
                                             <?= e($entry['note'] ?: '—') ?>
                                         </span>
-                                        <form method="post" action="<?= e(url('/teachers/behavior/' . $entry['id'] . '/delete')) ?>">
-                                            <?= csrf_field() ?>
-                                            <button class="btn btn-xs btn-link" type="submit">حذف</button>
-                                        </form>
+                                        <?php if (can('manage_teachers')): ?>
+                                            <form method="post" action="<?= e(url('/teachers/behavior/' . $entry['id'] . '/delete')) ?>">
+                                                <?= csrf_field() ?>
+                                                <button class="btn btn-xs btn-link" type="submit">حذف</button>
+                                            </form>
+                                        <?php endif; ?>
                                     </div>
                                 <?php endforeach; ?>
                             </div>

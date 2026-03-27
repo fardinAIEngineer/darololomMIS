@@ -11,6 +11,7 @@ final class ClassesController extends Controller
 {
     public function index(array $params = []): void
     {
+        $this->authorize('manage_classes', 'شما اجازه دسترسی به مدیریت صنوف را ندارید.');
         clear_old();
         $db = Database::connection();
 
@@ -50,6 +51,7 @@ final class ClassesController extends Controller
 
     public function create(array $params = []): void
     {
+        $this->authorize('manage_classes', 'شما اجازه ثبت صنف جدید را ندارید.', '/');
         clear_old();
         $this->render('classes/form', [
             'title' => 'ثبت صنف',
@@ -61,6 +63,7 @@ final class ClassesController extends Controller
 
     public function store(array $params = []): void
     {
+        $this->authorize('manage_classes', 'شما اجازه ثبت صنف جدید را ندارید.', '/');
         $this->csrfCheck();
         $validation = $this->validateClassInput();
         if (!$validation['valid']) {
@@ -80,6 +83,7 @@ final class ClassesController extends Controller
 
     public function edit(array $params = []): void
     {
+        $this->authorize('manage_classes', 'شما اجازه ویرایش صنف را ندارید.', '/');
         clear_old();
         $id = $this->intParam($params, 'id');
         $db = Database::connection();
@@ -103,6 +107,7 @@ final class ClassesController extends Controller
 
     public function update(array $params = []): void
     {
+        $this->authorize('manage_classes', 'شما اجازه ویرایش صنف را ندارید.', '/');
         $this->csrfCheck();
         $id = $this->intParam($params, 'id');
         $validation = $this->validateClassInput();
@@ -127,6 +132,7 @@ final class ClassesController extends Controller
 
     public function destroy(array $params = []): void
     {
+        $this->authorize('manage_classes', 'شما اجازه حذف صنف را ندارید.', '/');
         $this->csrfCheck();
         $id = $this->intParam($params, 'id');
 
@@ -139,6 +145,7 @@ final class ClassesController extends Controller
 
     public function apiSearch(array $params = []): void
     {
+        $this->authorize('manage_classes', 'شما اجازه جستجوی صنوف را ندارید.', '/');
         $q = trim((string) ($_GET['q'] ?? ''));
         $db = Database::connection();
 

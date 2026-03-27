@@ -13,6 +13,7 @@ CREATE TABLE IF NOT EXISTS users (
     username VARCHAR(100) NOT NULL UNIQUE,
     password_hash VARCHAR(255) NOT NULL,
     role ENUM('super_admin', 'admin') NOT NULL DEFAULT 'admin',
+    permissions JSON NULL,
     can_register_students TINYINT(1) NOT NULL DEFAULT 0,
     can_register_teachers TINYINT(1) NOT NULL DEFAULT 0,
     created_by INT UNSIGNED NULL,
@@ -21,6 +22,22 @@ CREATE TABLE IF NOT EXISTS users (
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     CONSTRAINT fk_users_created_by FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL
 ) ENGINE=InnoDB;
+
+SET @has_permissions_col := (
+    SELECT COUNT(*)
+    FROM information_schema.columns
+    WHERE table_schema = DATABASE()
+      AND table_name = 'users'
+      AND column_name = 'permissions'
+);
+SET @alter_users_permissions_sql := IF(
+    @has_permissions_col = 0,
+    'ALTER TABLE users ADD COLUMN permissions JSON NULL AFTER role',
+    'SELECT 1'
+);
+PREPARE alter_users_permissions_stmt FROM @alter_users_permissions_sql;
+EXECUTE alter_users_permissions_stmt;
+DEALLOCATE PREPARE alter_users_permissions_stmt;
 
 CREATE TABLE IF NOT EXISTS semesters (
     id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,

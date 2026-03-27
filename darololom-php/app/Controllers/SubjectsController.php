@@ -11,6 +11,7 @@ final class SubjectsController extends Controller
 {
     public function index(array $params = []): void
     {
+        $this->authorize('manage_subjects', 'شما اجازه دسترسی به مدیریت مضامین را ندارید.');
         clear_old();
         $db = Database::connection();
 
@@ -48,6 +49,7 @@ final class SubjectsController extends Controller
 
     public function create(array $params = []): void
     {
+        $this->authorize('manage_subjects', 'شما اجازه ثبت مضمون جدید را ندارید.', '/');
         clear_old();
         $this->render('subjects/form', [
             'title' => 'ثبت مضمون',
@@ -59,6 +61,7 @@ final class SubjectsController extends Controller
 
     public function store(array $params = []): void
     {
+        $this->authorize('manage_subjects', 'شما اجازه ثبت مضمون جدید را ندارید.', '/');
         $this->csrfCheck();
         $name = trim((string) ($_POST['name'] ?? ''));
 
@@ -79,6 +82,7 @@ final class SubjectsController extends Controller
 
     public function edit(array $params = []): void
     {
+        $this->authorize('manage_subjects', 'شما اجازه ویرایش مضمون را ندارید.', '/');
         clear_old();
         $id = $this->intParam($params, 'id');
         $db = Database::connection();
@@ -102,6 +106,7 @@ final class SubjectsController extends Controller
 
     public function update(array $params = []): void
     {
+        $this->authorize('manage_subjects', 'شما اجازه ویرایش مضمون را ندارید.', '/');
         $this->csrfCheck();
         $id = $this->intParam($params, 'id');
         $name = trim((string) ($_POST['name'] ?? ''));
@@ -127,6 +132,7 @@ final class SubjectsController extends Controller
 
     public function destroy(array $params = []): void
     {
+        $this->authorize('manage_subjects', 'شما اجازه حذف مضمون را ندارید.', '/');
         $this->csrfCheck();
         $id = $this->intParam($params, 'id');
 

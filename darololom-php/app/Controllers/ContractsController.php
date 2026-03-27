@@ -11,6 +11,7 @@ final class ContractsController extends Controller
 {
     public function show(array $params = []): void
     {
+        $this->authorize('manage_contracts', 'شما اجازه دسترسی به قراردادها را ندارید.');
         clear_old();
         $teacherId = (int) ($params['teacherId'] ?? 0);
         $db = Database::connection();
@@ -35,6 +36,7 @@ final class ContractsController extends Controller
 
     public function save(array $params = []): void
     {
+        $this->authorize('manage_contracts', 'شما اجازه ذخیره قرارداد را ندارید.', '/');
         $this->csrfCheck();
         $teacherId = (int) ($params['teacherId'] ?? 0);
         $db = Database::connection();

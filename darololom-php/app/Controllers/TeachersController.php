@@ -12,6 +12,7 @@ final class TeachersController extends Controller
 {
     public function index(array $params = []): void
     {
+        $this->authorize('access_teachers', 'شما اجازه دسترسی به بخش اساتید را ندارید.');
         clear_old();
         $db = Database::connection();
 
@@ -188,6 +189,7 @@ final class TeachersController extends Controller
 
     public function edit(array $params = []): void
     {
+        $this->authorize('manage_teachers', 'شما اجازه ویرایش اساتید را ندارید.', '/teachers');
         $id = $this->intParam($params, 'id');
         $db = Database::connection();
 
@@ -215,6 +217,7 @@ final class TeachersController extends Controller
 
     public function update(array $params = []): void
     {
+        $this->authorize('manage_teachers', 'شما اجازه ویرایش اساتید را ندارید.', '/teachers');
         $this->csrfCheck();
         $id = $this->intParam($params, 'id');
         $db = Database::connection();
@@ -297,6 +300,7 @@ final class TeachersController extends Controller
 
     public function destroy(array $params = []): void
     {
+        $this->authorize('manage_teachers', 'شما اجازه حذف اساتید را ندارید.', '/teachers');
         $this->csrfCheck();
         $id = $this->intParam($params, 'id');
 
@@ -309,6 +313,7 @@ final class TeachersController extends Controller
 
     public function addBehavior(array $params = []): void
     {
+        $this->authorize('manage_teachers', 'شما اجازه ثبت رفتار برای اساتید را ندارید.', '/teachers');
         $this->csrfCheck();
         $teacherId = $this->intParam($params, 'id');
         $type = trim((string) ($_POST['entry_type'] ?? ''));
@@ -333,6 +338,7 @@ final class TeachersController extends Controller
 
     public function deleteBehavior(array $params = []): void
     {
+        $this->authorize('manage_teachers', 'شما اجازه حذف رفتار اساتید را ندارید.', '/teachers');
         $this->csrfCheck();
         $id = $this->intParam($params, 'id');
 
@@ -345,6 +351,7 @@ final class TeachersController extends Controller
 
     public function appreciation(array $params = []): void
     {
+        $this->authorize('access_teachers', 'شما اجازه مشاهده تقدیرنامه اساتید را ندارید.', '/');
         $id = $this->intParam($params, 'id');
         $db = Database::connection();
 

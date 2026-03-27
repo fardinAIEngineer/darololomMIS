@@ -12,6 +12,7 @@ final class StudentsController extends Controller
 {
     public function index(array $params = []): void
     {
+        $this->authorize('access_students', 'شما اجازه دسترسی به بخش شاگردان را ندارید.');
         clear_old();
         $db = Database::connection();
 
@@ -171,6 +172,7 @@ final class StudentsController extends Controller
 
     public function edit(array $params = []): void
     {
+        $this->authorize('manage_students', 'شما اجازه ویرایش شاگردان را ندارید.', '/students');
         $id = $this->intParam($params, 'id');
         $db = Database::connection();
 
@@ -203,6 +205,7 @@ final class StudentsController extends Controller
 
     public function update(array $params = []): void
     {
+        $this->authorize('manage_students', 'شما اجازه ویرایش شاگردان را ندارید.', '/students');
         $this->csrfCheck();
         $id = $this->intParam($params, 'id');
         $db = Database::connection();
@@ -277,6 +280,7 @@ final class StudentsController extends Controller
 
     public function destroy(array $params = []): void
     {
+        $this->authorize('manage_students', 'شما اجازه حذف شاگردان را ندارید.', '/students');
         $this->csrfCheck();
         $id = $this->intParam($params, 'id');
 
@@ -290,6 +294,7 @@ final class StudentsController extends Controller
 
     public function addBehavior(array $params = []): void
     {
+        $this->authorize('manage_students', 'شما اجازه ثبت رفتار برای شاگردان را ندارید.', '/students');
         $this->csrfCheck();
         $studentId = $this->intParam($params, 'id');
         $type = trim((string) ($_POST['entry_type'] ?? ''));
@@ -314,6 +319,7 @@ final class StudentsController extends Controller
 
     public function deleteBehavior(array $params = []): void
     {
+        $this->authorize('manage_students', 'شما اجازه حذف رفتار شاگردان را ندارید.', '/students');
         $this->csrfCheck();
         $id = $this->intParam($params, 'id');
 
@@ -327,6 +333,7 @@ final class StudentsController extends Controller
 
     public function results(array $params = []): void
     {
+        $this->authorize('access_students', 'شما اجازه مشاهده نتایج شاگردان را ندارید.', '/');
         $id = $this->intParam($params, 'id');
         $db = Database::connection();
 
@@ -355,6 +362,7 @@ final class StudentsController extends Controller
 
     public function certificate(array $params = []): void
     {
+        $this->authorize('access_students', 'شما اجازه مشاهده سرتفیکت شاگردان را ندارید.', '/');
         $id = $this->intParam($params, 'id');
         $db = Database::connection();
 
@@ -380,6 +388,7 @@ final class StudentsController extends Controller
 
     public function appreciation(array $params = []): void
     {
+        $this->authorize('access_students', 'شما اجازه مشاهده تقدیرنامه شاگردان را ندارید.', '/');
         $id = $this->intParam($params, 'id');
         $db = Database::connection();
 
@@ -414,6 +423,7 @@ final class StudentsController extends Controller
 
     public function promoteToMoteseta(array $params = []): void
     {
+        $this->authorize('manage_students', 'شما اجازه ارتقای شاگردان را ندارید.', '/students');
         $this->csrfCheck();
         $id = $this->intParam($params, 'id');
         $db = Database::connection();
