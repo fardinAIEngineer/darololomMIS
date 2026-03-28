@@ -116,10 +116,6 @@ final class TeachersController extends Controller
             'teacher' => null,
             'linkedUser' => null,
             ...$this->references(),
-            'selectedClassIds' => [],
-            'selectedSubjectIds' => [],
-            'selectedLevelIds' => [],
-            'selectedSemesterIds' => [],
             'selectedPeriodIds' => [],
             'formAction' => url('/teachers/store'),
         ]);
@@ -166,19 +162,19 @@ final class TeachersController extends Controller
 
         $stmt = $db->prepare('INSERT INTO teachers (
             name, father_name, birth_date, permanent_address, current_address,
-            village, district, area, gender, education_level, id_number,
+            village, district, area, current_street, gender, education_level, id_number,
             image_path, plan_file, education_document, experience_document, created_at
         ) VALUES (
             :name, :father_name, :birth_date, :permanent_address, :current_address,
-            :village, :district, :area, :gender, :education_level, :id_number,
+            :village, :district, :area, :current_street, :gender, :education_level, :id_number,
             :image_path, :plan_file, :education_document, :experience_document, NOW()
         )');
 
         $stmt->execute($this->payload($image, $plan, $eduDoc, $expDoc));
         $teacherId = (int) $db->lastInsertId();
 
-        $this->syncMany($teacherId, 'teacher_class', 'class_id', $validation['class_ids']);
-        $this->syncMany($teacherId, 'teacher_subject', 'subject_id', $validation['subject_ids']);
+        $this->syncMany($teacherId, 'teacher_class', 'class_id', []);
+        $this->syncMany($teacherId, 'teacher_subject', 'subject_id', []);
         $this->syncMany($teacherId, 'teacher_level', 'level_id', $validation['level_ids']);
         $this->syncMany($teacherId, 'teacher_semester', 'semester_id', $validation['semester_ids']);
         $this->syncMany($teacherId, 'teacher_period', 'period_id', $validation['period_ids']);
@@ -216,10 +212,6 @@ final class TeachersController extends Controller
             'teacher' => $teacher,
             'linkedUser' => $linkedUser,
             ...$this->references(),
-            'selectedClassIds' => $this->selectedIds('teacher_class', 'class_id', $id),
-            'selectedSubjectIds' => $this->selectedIds('teacher_subject', 'subject_id', $id),
-            'selectedLevelIds' => $this->selectedIds('teacher_level', 'level_id', $id),
-            'selectedSemesterIds' => $this->selectedIds('teacher_semester', 'semester_id', $id),
             'selectedPeriodIds' => $this->selectedIds('teacher_period', 'period_id', $id),
             'formAction' => url('/teachers/' . $id . '/update'),
         ]);
@@ -287,6 +279,7 @@ final class TeachersController extends Controller
             village = :village,
             district = :district,
             area = :area,
+            current_street = :current_street,
             gender = :gender,
             education_level = :education_level,
             id_number = :id_number,
@@ -298,8 +291,8 @@ final class TeachersController extends Controller
 
         $update->execute($payload);
 
-        $this->syncMany($id, 'teacher_class', 'class_id', $validation['class_ids']);
-        $this->syncMany($id, 'teacher_subject', 'subject_id', $validation['subject_ids']);
+        $this->syncMany($id, 'teacher_class', 'class_id', []);
+        $this->syncMany($id, 'teacher_subject', 'subject_id', []);
         $this->syncMany($id, 'teacher_level', 'level_id', $validation['level_ids']);
         $this->syncMany($id, 'teacher_semester', 'semester_id', $validation['semester_ids']);
         $this->syncMany($id, 'teacher_period', 'period_id', $validation['period_ids']);
@@ -408,10 +401,6 @@ final class TeachersController extends Controller
     {
         $db = Database::connection();
         return [
-            'classes' => $db->query('SELECT * FROM school_classes ORDER BY name')->fetchAll(),
-            'subjects' => $db->query('SELECT * FROM subjects ORDER BY name')->fetchAll(),
-            'levels' => $db->query('SELECT * FROM study_levels ORDER BY id')->fetchAll(),
-            'semesters' => $db->query('SELECT * FROM semesters WHERE number BETWEEN 1 AND 4 ORDER BY number')->fetchAll(),
             'periods' => $db->query('SELECT * FROM course_periods ORDER BY number')->fetchAll(),
         ];
     }
@@ -529,6 +518,7 @@ final class TeachersController extends Controller
             'village' => trim((string) ($_POST['village'] ?? '')),
             'district' => trim((string) ($_POST['district'] ?? '')),
             'area' => trim((string) ($_POST['area'] ?? '')),
+            'current_street' => trim((string) ($_POST['current_street'] ?? '')),
             'gender' => $gender,
             'education_level' => $education,
             'id_number' => trim((string) ($_POST['id_number'] ?? '')),
@@ -587,8 +577,6 @@ final class TeachersController extends Controller
      * @return array{
      *     valid:bool,
      *     error:string,
-     *     class_ids:array<int>,
-     *     subject_ids:array<int>,
      *     level_ids:array<int>,
      *     semester_ids:array<int>,
      *     period_ids:array<int>,
@@ -606,6 +594,7 @@ final class TeachersController extends Controller
         $village = trim((string) ($_POST['village'] ?? ''));
         $district = trim((string) ($_POST['district'] ?? ''));
         $area = trim((string) ($_POST['area'] ?? ''));
+        $currentStreet = trim((string) ($_POST['current_street'] ?? ''));
         $gender = (string) ($_POST['gender'] ?? '');
         $educationLevel = (string) ($_POST['education_level'] ?? '');
         $idNumber = trim((string) ($_POST['id_number'] ?? ''));
@@ -646,6 +635,9 @@ final class TeachersController extends Controller
         }
         if ($area === '' || mb_strlen($area) > 150) {
             return $this->validationError('ناحیه را به شکل درست وارد کنید.');
+        }
+        if ($currentStreet === '' || mb_strlen($currentStreet) > 150) {
+            return $this->validationError('کوچه سکونت فعلی را به شکل درست وارد کنید.');
         }
 
         if ($accountEmail === '' || !filter_var($accountEmail, FILTER_VALIDATE_EMAIL) || mb_strlen($accountEmail) > 190) {
@@ -712,74 +704,17 @@ final class TeachersController extends Controller
             return $this->validationError($expValidation);
         }
 
-        $classIds = $this->normalizeIdArray($_POST['class_ids'] ?? []);
-        $subjectIds = $this->normalizeIdArray($_POST['subject_ids'] ?? []);
-        $levelIds = $this->normalizeIdArray($_POST['level_ids'] ?? []);
-        $semesterIds = $this->normalizeIdArray($_POST['semester_ids'] ?? []);
         $periodIds = $this->normalizeIdArray($_POST['period_ids'] ?? []);
-
-        if (count($classIds) < 1) {
-            return $this->validationError('حداقل یک صنف تدریس را انتخاب کنید.');
-        }
-        if (count($subjectIds) < 1) {
-            return $this->validationError('حداقل یک مضمون را انتخاب کنید.');
-        }
-        if (count($levelIds) < 1) {
-            return $this->validationError('حداقل یک سطح تدریس را انتخاب کنید.');
-        }
-
-        if (!$this->allIdsExist('school_classes', $classIds)) {
-            return $this->validationError('صنف‌های انتخاب‌شده معتبر نیستند.');
-        }
-        if (!$this->allIdsExist('subjects', $subjectIds)) {
-            return $this->validationError('مضامین انتخاب‌شده معتبر نیستند.');
-        }
-        if (!$this->allIdsExist('study_levels', $levelIds)) {
-            return $this->validationError('سطوح انتخاب‌شده معتبر نیستند.');
-        }
-        if ($semesterIds !== [] && !$this->allIdsExist('semesters', $semesterIds)) {
-            return $this->validationError('سمسترهای انتخاب‌شده معتبر نیستند.');
-        }
         if ($periodIds !== [] && !$this->allIdsExist('course_periods', $periodIds)) {
             return $this->validationError('دوره‌های انتخاب‌شده معتبر نیستند.');
-        }
-
-        $levelCodes = $this->levelCodesByIds($levelIds);
-
-        if (in_array('aali', $levelCodes, true) && count($semesterIds) < 1) {
-            return $this->validationError('برای سطح عالی، حداقل یک سمستر انتخاب کنید.');
-        }
-
-        $requiresPeriod = in_array('moteseta', $levelCodes, true) || in_array('ebtedai', $levelCodes, true);
-        if ($requiresPeriod && count($periodIds) < 1) {
-            return $this->validationError('برای متوسطه/ابتداییه، حداقل یک دوره انتخاب کنید.');
-        }
-
-        if (!in_array('aali', $levelCodes, true) && count($semesterIds) > 0) {
-            return $this->validationError('وقتی سطح عالی انتخاب نیست، سمستر نباید انتخاب شود.');
-        }
-
-        if (!$requiresPeriod && count($periodIds) > 0) {
-            return $this->validationError('وقتی متوسطه/ابتداییه انتخاب نیست، دوره نباید انتخاب شود.');
-        }
-
-        $classLevelStmt = $db->prepare('SELECT id, level_id FROM school_classes WHERE id IN (' . implode(',', array_fill(0, count($classIds), '?')) . ')');
-        $classLevelStmt->execute($classIds);
-        foreach ($classLevelStmt->fetchAll() as $row) {
-            $classLevelId = (int) ($row['level_id'] ?? 0);
-            if ($classLevelId > 0 && !in_array($classLevelId, $levelIds, true)) {
-                return $this->validationError('سطح صنف‌های انتخابی باید داخل سطوح تدریس انتخاب‌شده باشد.');
-            }
         }
 
         return [
             'valid' => true,
             'error' => '',
-            'class_ids' => $classIds,
-            'subject_ids' => $subjectIds,
-            'level_ids' => $levelIds,
-            'semester_ids' => in_array('aali', $levelCodes, true) ? $semesterIds : [],
-            'period_ids' => $requiresPeriod ? $periodIds : [],
+            'level_ids' => [],
+            'semester_ids' => [],
+            'period_ids' => $periodIds,
             'account_email' => $accountEmail,
             'account_password_hash' => $accountPassword !== '' ? password_hash($accountPassword, PASSWORD_DEFAULT) : null,
         ];
@@ -817,23 +752,6 @@ final class TeachersController extends Controller
         $stmt->execute($ids);
 
         return (int) $stmt->fetchColumn() === count($ids);
-    }
-
-    /**
-     * @return array<int, string>
-     */
-    private function levelCodesByIds(array $levelIds): array
-    {
-        if ($levelIds === []) {
-            return [];
-        }
-
-        $db = Database::connection();
-        $placeholders = implode(',', array_fill(0, count($levelIds), '?'));
-        $stmt = $db->prepare("SELECT code FROM study_levels WHERE id IN ($placeholders)");
-        $stmt->execute($levelIds);
-
-        return array_map(static fn (array $row): string => (string) $row['code'], $stmt->fetchAll());
     }
 
     private function isValidDate(string $date): bool
@@ -877,15 +795,13 @@ final class TeachersController extends Controller
     }
 
     /**
-     * @return array{valid:bool,error:string,class_ids:array<int>,subject_ids:array<int>,level_ids:array<int>,semester_ids:array<int>,period_ids:array<int>}
+     * @return array{valid:bool,error:string,level_ids:array<int>,semester_ids:array<int>,period_ids:array<int>}
      */
     private function validationError(string $message): array
     {
         return [
             'valid' => false,
             'error' => $message,
-            'class_ids' => [],
-            'subject_ids' => [],
             'level_ids' => [],
             'semester_ids' => [],
             'period_ids' => [],

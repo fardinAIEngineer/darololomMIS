@@ -187,6 +187,7 @@ CREATE TABLE IF NOT EXISTS teachers (
     village VARCHAR(150) NULL,
     district VARCHAR(150) NULL,
     area VARCHAR(150) NULL,
+    current_street VARCHAR(150) NULL,
     gender ENUM('male', 'female') NOT NULL DEFAULT 'male',
     education_level ENUM('p', 'b', 'm', 'd') NOT NULL DEFAULT 'p',
     id_number VARCHAR(100) NULL,
@@ -196,6 +197,22 @@ CREATE TABLE IF NOT EXISTS teachers (
     experience_document VARCHAR(255) NULL,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB;
+
+SET @has_teachers_current_street := (
+    SELECT COUNT(*)
+    FROM information_schema.columns
+    WHERE table_schema = DATABASE()
+      AND table_name = 'teachers'
+      AND column_name = 'current_street'
+);
+SET @add_teachers_current_street_sql := IF(
+    @has_teachers_current_street = 0,
+    'ALTER TABLE teachers ADD COLUMN current_street VARCHAR(150) NULL AFTER area',
+    'SELECT 1'
+);
+PREPARE add_teachers_current_street_stmt FROM @add_teachers_current_street_sql;
+EXECUTE add_teachers_current_street_stmt;
+DEALLOCATE PREPARE add_teachers_current_street_stmt;
 
 CREATE TABLE IF NOT EXISTS teacher_class (
     teacher_id INT UNSIGNED NOT NULL,

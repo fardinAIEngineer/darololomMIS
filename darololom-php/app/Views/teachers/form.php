@@ -2,35 +2,13 @@
 $linkedUser = $linkedUser ?? null;
 $oldOr = static fn(string $key, mixed $fallback = ''): mixed => old($key, $teacher[$key] ?? $fallback);
 
-$selectedClassIdsInput = old('class_ids', $selectedClassIds ?? []);
-if (!is_array($selectedClassIdsInput)) {
-    $selectedClassIdsInput = [];
-}
-$selectedClassIds = array_map('intval', $selectedClassIdsInput);
-
-$selectedSubjectIdsInput = old('subject_ids', $selectedSubjectIds ?? []);
-if (!is_array($selectedSubjectIdsInput)) {
-    $selectedSubjectIdsInput = [];
-}
-$selectedSubjectIds = array_map('intval', $selectedSubjectIdsInput);
-
-$selectedLevelIdsInput = old('level_ids', $selectedLevelIds ?? []);
-if (!is_array($selectedLevelIdsInput)) {
-    $selectedLevelIdsInput = [];
-}
-$selectedLevelIds = array_map('intval', $selectedLevelIdsInput);
-
-$selectedSemesterIdsInput = old('semester_ids', $selectedSemesterIds ?? []);
-if (!is_array($selectedSemesterIdsInput)) {
-    $selectedSemesterIdsInput = [];
-}
-$selectedSemesterIds = array_map('intval', $selectedSemesterIdsInput);
-
 $selectedPeriodIdsInput = old('period_ids', $selectedPeriodIds ?? []);
 if (!is_array($selectedPeriodIdsInput)) {
     $selectedPeriodIdsInput = [];
 }
 $selectedPeriodIds = array_map('intval', $selectedPeriodIdsInput);
+$birthDateValue = (string) $oldOr('birth_date');
+$jalaliMonths = ['حمل', 'ثور', 'جوزا', 'سرطان', 'اسد', 'سنبله', 'میزان', 'عقرب', 'قوس', 'جدی', 'دلو', 'حوت'];
 $accountEmail = (string) old('account_email', (string) ($linkedUser['email'] ?? ''));
 $mustSetPassword = empty($linkedUser['id']);
 ?>
@@ -42,8 +20,8 @@ $mustSetPassword = empty($linkedUser['id']);
 <div class="news-thumb teacher-wizard-wrap">
     <div class="news-info">
         <div class="wizard-header">
-            <button type="button" class="wizard-step is-active" data-step-target="1">۱) اطلاعات فردی</button>
-            <button type="button" class="wizard-step" data-step-target="2">۲) آدرس</button>
+            <button type="button" class="wizard-step is-active" data-step-target="1">۱) اطلاعات فردی و سکونت اصلی</button>
+            <button type="button" class="wizard-step" data-step-target="2">۲) سکونت فعلی</button>
             <button type="button" class="wizard-step" data-step-target="3">۳) اسناد</button>
             <button type="button" class="wizard-step" data-step-target="4">۴) تدریس و حساب</button>
         </div>
@@ -65,9 +43,29 @@ $mustSetPassword = empty($linkedUser['id']);
                 </div>
 
                 <div class="form-group">
-                    <label>تاریخ تولد</label>
-                    <input class="form-control" type="date" name="birth_date" value="<?= e((string) $oldOr('birth_date')) ?>" required>
-                    <small class="field-help">فرمت تاریخ: YYYY-MM-DD</small>
+                    <label>تاریخ تولد (هجری شمسی)</label>
+                    <div class="jalali-date-grid">
+                        <select class="form-control" id="teacher_birth_date_day" required>
+                            <option value="">روز</option>
+                            <?php for ($d = 1; $d <= 31; $d++): ?>
+                                <option value="<?= e((string) $d) ?>"><?= e((string) $d) ?></option>
+                            <?php endfor; ?>
+                        </select>
+                        <select class="form-control" id="teacher_birth_date_month" required>
+                            <option value="">ماه</option>
+                            <?php foreach ($jalaliMonths as $idx => $monthName): ?>
+                                <option value="<?= e((string) ($idx + 1)) ?>"><?= e($monthName) ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                        <select class="form-control" id="teacher_birth_date_year" required>
+                            <option value="">سال</option>
+                            <?php for ($y = 1460; $y >= 1330; $y--): ?>
+                                <option value="<?= e((string) $y) ?>"><?= e((string) $y) ?></option>
+                            <?php endfor; ?>
+                        </select>
+                    </div>
+                    <input type="hidden" name="birth_date" id="teacher_birth_date" value="<?= e($birthDateValue) ?>">
+                    <small class="field-help">تاریخ را به جنتری هجری شمسی با ماه‌های افغانی انتخاب کنید.</small>
                 </div>
 
                 <div class="form-group">
@@ -95,37 +93,43 @@ $mustSetPassword = empty($linkedUser['id']);
                     <input class="form-control" name="id_number" value="<?= e((string) $oldOr('id_number')) ?>" placeholder="مثال: 12345-98765" pattern="[0-9A-Za-z\-\/\s]+" maxlength="100" required>
                     <small class="field-help">اعداد/حروف انگلیسی، خط تیره و اسلش مجاز است.</small>
                 </div>
+
+                <div class="form-group">
+                    <label>ولایت سکونت اصلی</label>
+                    <input class="form-control" name="permanent_address" value="<?= e((string) $oldOr('permanent_address')) ?>" placeholder="مثال: بغلان" minlength="2" required>
+                    <small class="field-help">این بخش مربوط سکونت اصلی است.</small>
+                </div>
+
+                <div class="form-group">
+                    <label>ولسوالی سکونت اصلی</label>
+                    <input class="form-control" name="district" value="<?= e((string) $oldOr('district')) ?>" placeholder="مثال: خنجان" maxlength="150" required>
+                    <small class="field-help">نام ولسوالی سکونت اصلی را وارد کنید.</small>
+                </div>
+
+                <div class="form-group">
+                    <label>قریه سکونت اصلی</label>
+                    <input class="form-control" name="village" value="<?= e((string) $oldOr('village')) ?>" placeholder="مثال: نوآباد" maxlength="150" required>
+                    <small class="field-help">نام قریه سکونت اصلی را وارد کنید.</small>
+                </div>
             </section>
 
             <section class="wizard-panel" data-step-panel="2">
-                <div class="form-group full">
-                    <label>ولایت/سکونت فعلی</label>
+                <div class="form-group">
+                    <label>ولایت سکونت فعلی</label>
                     <input class="form-control" name="current_address" value="<?= e((string) $oldOr('current_address')) ?>" placeholder="مثال: کابل" minlength="2" required>
-                    <small class="field-help">محل سکونت فعلی استاد.</small>
-                </div>
-
-                <div class="form-group full">
-                    <label>ولایت/سکونت اصلی</label>
-                    <input class="form-control" name="permanent_address" value="<?= e((string) $oldOr('permanent_address')) ?>" placeholder="مثال: بغلان" minlength="2" required>
-                    <small class="field-help">محل سکونت اصلی استاد.</small>
+                    <small class="field-help">ولایت محل سکونت فعلی را وارد کنید.</small>
                 </div>
 
                 <div class="form-group">
-                    <label>قریه</label>
-                    <input class="form-control" name="village" value="<?= e((string) $oldOr('village')) ?>" placeholder="مثال: نوآباد" maxlength="150" required>
-                    <small class="field-help">نام قریه را وارد کنید.</small>
-                </div>
-
-                <div class="form-group">
-                    <label>ولسوالی</label>
-                    <input class="form-control" name="district" value="<?= e((string) $oldOr('district')) ?>" placeholder="مثال: خنجان" maxlength="150" required>
-                    <small class="field-help">نام ولسوالی را وارد کنید.</small>
-                </div>
-
-                <div class="form-group">
-                    <label>ناحیه</label>
+                    <label>ناحیه سکونت فعلی</label>
                     <input class="form-control" name="area" value="<?= e((string) $oldOr('area')) ?>" placeholder="مثال: ناحیه ۴" maxlength="150" required>
-                    <small class="field-help">ناحیه فعلی را وارد کنید.</small>
+                    <small class="field-help">ناحیه سکونت فعلی را وارد کنید.</small>
+                </div>
+
+                <div class="form-group">
+                    <label>کوچه سکونت فعلی</label>
+                    <input class="form-control" name="current_street" value="<?= e((string) $oldOr('current_street')) ?>" placeholder="مثال: کوچه گلستان" maxlength="150" required>
+                    <small class="field-help">نام کوچه سکونت فعلی را وارد کنید.</small>
                 </div>
             </section>
 
@@ -135,13 +139,6 @@ $mustSetPassword = empty($linkedUser['id']);
                     <input type="file" class="form-control" name="image" accept=".jpg,.jpeg,.png,.webp,image/*">
                     <small class="field-help">فرمت مجاز: JPG/PNG/WEBP | حداکثر 2MB</small>
                     <?php if (!empty($teacher['image_path'])): ?><a href="<?= e(url($teacher['image_path'])) ?>" target="_blank">نمایش فایل فعلی</a><?php endif; ?>
-                </div>
-
-                <div class="form-group">
-                    <label>پلان درسی (PDF)</label>
-                    <input type="file" class="form-control" name="plan_file" accept=".pdf,application/pdf">
-                    <small class="field-help">فقط PDF | حداکثر 5MB</small>
-                    <?php if (!empty($teacher['plan_file'])): ?><a href="<?= e(url($teacher['plan_file'])) ?>" target="_blank">نمایش فایل فعلی</a><?php endif; ?>
                 </div>
 
                 <div class="form-group">
@@ -160,52 +157,6 @@ $mustSetPassword = empty($linkedUser['id']);
             </section>
 
             <section class="wizard-panel" data-step-panel="4">
-                <div class="form-group full picker-group">
-                    <label>صنوف تدریس</label>
-                    <div class="inline-checks">
-                        <?php foreach ($classes as $item): ?>
-                            <label>
-                                <input type="checkbox" name="class_ids[]" data-class-level-id="<?= e((string) ($item['level_id'] ?? '')) ?>" value="<?= e((string) $item['id']) ?>" <?= in_array((int) $item['id'], $selectedClassIds, true) ? 'checked' : '' ?>>
-                                <?= e($item['name']) ?>
-                            </label>
-                        <?php endforeach; ?>
-                    </div>
-                    <small class="field-help">حداقل یک صنف انتخاب کنید.</small>
-                </div>
-
-                <div class="form-group full picker-group">
-                    <label>مضامین تدریس</label>
-                    <div class="inline-checks">
-                        <?php foreach ($subjects as $item): ?>
-                            <label><input type="checkbox" name="subject_ids[]" value="<?= e((string) $item['id']) ?>" <?= in_array((int) $item['id'], $selectedSubjectIds, true) ? 'checked' : '' ?>> <?= e($item['name']) ?></label>
-                        <?php endforeach; ?>
-                    </div>
-                    <small class="field-help">حداقل یک مضمون انتخاب کنید.</small>
-                </div>
-
-                <div class="form-group full picker-group">
-                    <label>سطوح تدریس</label>
-                    <div class="inline-checks">
-                        <?php foreach ($levels as $item): ?>
-                            <label>
-                                <input type="checkbox" name="level_ids[]" data-level-code="<?= e((string) ($item['code'] ?? '')) ?>" value="<?= e((string) $item['id']) ?>" <?= in_array((int) $item['id'], $selectedLevelIds, true) ? 'checked' : '' ?>>
-                                <?= e($item['name']) ?>
-                            </label>
-                        <?php endforeach; ?>
-                    </div>
-                    <small class="field-help">حداقل یک سطح انتخاب کنید.</small>
-                </div>
-
-                <div class="form-group full picker-group" id="teacher_semester_block">
-                    <label>سمسترها</label>
-                    <div class="inline-checks">
-                        <?php foreach ($semesters as $item): ?>
-                            <label><input type="checkbox" name="semester_ids[]" value="<?= e((string) $item['id']) ?>" <?= in_array((int) $item['id'], $selectedSemesterIds, true) ? 'checked' : '' ?>> <?= e((string) $item['number']) ?></label>
-                        <?php endforeach; ?>
-                    </div>
-                    <small class="field-help">برای سطح عالی حداقل یک سمستر ضروری است.</small>
-                </div>
-
                 <div class="form-group full picker-group" id="teacher_period_block">
                     <label>دوره‌ها</label>
                     <div class="inline-checks">
@@ -213,7 +164,7 @@ $mustSetPassword = empty($linkedUser['id']);
                             <label><input type="checkbox" name="period_ids[]" value="<?= e((string) $item['id']) ?>" <?= in_array((int) $item['id'], $selectedPeriodIds, true) ? 'checked' : '' ?>> <?= e((string) $item['number']) ?></label>
                         <?php endforeach; ?>
                     </div>
-                    <small class="field-help">برای ابتداییه/متوسطه حداقل یک دوره ضروری است.</small>
+                    <small class="field-help">در صورت نیاز دوره‌ها را انتخاب کنید.</small>
                 </div>
 
                 <div class="form-group">
@@ -258,6 +209,10 @@ $mustSetPassword = empty($linkedUser['id']);
     const accountEmail = document.getElementById('teacher_account_email');
     const accountPassword = document.getElementById('teacher_account_password');
     const accountPasswordConfirm = document.getElementById('teacher_account_password_confirmation');
+    const birthDateHidden = document.getElementById('teacher_birth_date');
+    const birthDateDay = document.getElementById('teacher_birth_date_day');
+    const birthDateMonth = document.getElementById('teacher_birth_date_month');
+    const birthDateYear = document.getElementById('teacher_birth_date_year');
     const mustSetPassword = <?= $mustSetPassword ? 'true' : 'false' ?>;
 
     let currentStep = 0;
@@ -289,66 +244,114 @@ $mustSetPassword = empty($linkedUser['id']);
         return true;
     }
 
-    function checkedCount(name) {
-        return form.querySelectorAll('input[name="' + name + '"]:checked').length;
+    function parseGregorian(value) {
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(value || '')) return null;
+        const parts = value.split('-').map((n) => parseInt(n, 10));
+        if (parts.length !== 3) return null;
+        return parts;
     }
 
-    function selectedLevelCodes() {
-        const selected = Array.from(form.querySelectorAll('input[name="level_ids[]"]:checked'));
-        return selected.map(el => el.dataset.levelCode || '');
+    function pad2(value) {
+        return String(value).padStart(2, '0');
     }
 
-    function selectedLevelIds() {
-        const selected = Array.from(form.querySelectorAll('input[name="level_ids[]"]:checked'));
-        return selected.map(el => String(el.value));
+    function gregorianToJalali(gy, gm, gd) {
+        const g_d_m = [0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334];
+        const gy2 = (gm > 2) ? (gy + 1) : gy;
+        let days = 355666 + (365 * gy) + Math.floor((gy2 + 3) / 4) - Math.floor((gy2 + 99) / 100) + Math.floor((gy2 + 399) / 400) + gd + g_d_m[gm - 1];
+        let jy = -1595 + 33 * Math.floor(days / 12053);
+        days %= 12053;
+        jy += 4 * Math.floor(days / 1461);
+        days %= 1461;
+        if (days > 365) {
+            jy += Math.floor((days - 1) / 365);
+            days = (days - 1) % 365;
+        }
+        const jm = (days < 186) ? 1 + Math.floor(days / 31) : 7 + Math.floor((days - 186) / 30);
+        const jd = 1 + (days < 186 ? (days % 31) : ((days - 186) % 30));
+        return [jy, jm, jd];
+    }
+
+    function jalaliToGregorian(jy, jm, jd) {
+        jy = parseInt(jy, 10);
+        jm = parseInt(jm, 10);
+        jd = parseInt(jd, 10);
+        jy += 1595;
+        let days = -355668 + (365 * jy) + Math.floor(jy / 33) * 8 + Math.floor(((jy % 33) + 3) / 4) + jd;
+        if (jm < 7) {
+            days += (jm - 1) * 31;
+        } else {
+            days += ((jm - 7) * 30) + 186;
+        }
+        let gy = 400 * Math.floor(days / 146097);
+        days %= 146097;
+        if (days > 36524) {
+            gy += 100 * Math.floor(--days / 36524);
+            days %= 36524;
+            if (days >= 365) days++;
+        }
+        gy += 4 * Math.floor(days / 1461);
+        days %= 1461;
+        if (days > 365) {
+            gy += Math.floor((days - 1) / 365);
+            days = (days - 1) % 365;
+        }
+        let gd = days + 1;
+        const sal_a = [0, 31, ((gy % 4 === 0 && gy % 100 !== 0) || (gy % 400 === 0)) ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+        let gm;
+        for (gm = 1; gm <= 12 && gd > sal_a[gm]; gm++) {
+            gd -= sal_a[gm];
+        }
+        return [gy, gm, gd];
+    }
+
+    function monthDays(jalaliMonth) {
+        const m = parseInt(jalaliMonth || '0', 10);
+        if (m >= 1 && m <= 6) return 31;
+        if (m >= 7 && m <= 11) return 30;
+        if (m === 12) return 30;
+        return 31;
+    }
+
+    function syncBirthDayOptions() {
+        if (!birthDateMonth || !birthDateDay) return;
+        const max = monthDays(birthDateMonth.value);
+        const current = parseInt(birthDateDay.value || '0', 10);
+        Array.from(birthDateDay.options).forEach((option) => {
+            if (!option.value) return;
+            option.disabled = parseInt(option.value, 10) > max;
+        });
+        if (current > max) {
+            birthDateDay.value = '';
+        }
+    }
+
+    function syncBirthHidden() {
+        syncBirthDayOptions();
+        if (!birthDateHidden || !birthDateYear || !birthDateMonth || !birthDateDay) return;
+        const y = parseInt(birthDateYear.value || '0', 10);
+        const m = parseInt(birthDateMonth.value || '0', 10);
+        const d = parseInt(birthDateDay.value || '0', 10);
+        if (!y || !m || !d) {
+            birthDateHidden.value = '';
+            return;
+        }
+        const [gy, gm, gd] = jalaliToGregorian(y, m, d);
+        birthDateHidden.value = `${gy}-${pad2(gm)}-${pad2(gd)}`;
+    }
+
+    function setBirthFromExisting() {
+        const parsed = parseGregorian(birthDateHidden ? birthDateHidden.value : '');
+        if (!parsed || !birthDateYear || !birthDateMonth || !birthDateDay) return;
+        const [gy, gm, gd] = parsed;
+        const [jy, jm, jd] = gregorianToJalali(gy, gm, gd);
+        birthDateYear.value = String(jy);
+        birthDateMonth.value = String(jm);
+        syncBirthDayOptions();
+        birthDateDay.value = String(jd);
     }
 
     function customValidateTeaching() {
-        if (checkedCount('class_ids[]') < 1) {
-            alert('حداقل یک صنف تدریس انتخاب کنید.');
-            return false;
-        }
-        if (checkedCount('subject_ids[]') < 1) {
-            alert('حداقل یک مضمون انتخاب کنید.');
-            return false;
-        }
-        if (checkedCount('level_ids[]') < 1) {
-            alert('حداقل یک سطح تدریس انتخاب کنید.');
-            return false;
-        }
-
-        const codes = selectedLevelCodes();
-        const levelIds = selectedLevelIds();
-        const hasAali = codes.includes('aali');
-        const hasBase = codes.includes('moteseta') || codes.includes('ebtedai');
-
-        if (hasAali && checkedCount('semester_ids[]') < 1) {
-            alert('برای سطح عالی حداقل یک سمستر انتخاب کنید.');
-            return false;
-        }
-        if (!hasAali && checkedCount('semester_ids[]') > 0) {
-            alert('بدون سطح عالی، سمستر نباید انتخاب شود.');
-            return false;
-        }
-
-        if (hasBase && checkedCount('period_ids[]') < 1) {
-            alert('برای ابتداییه/متوسطه حداقل یک دوره انتخاب کنید.');
-            return false;
-        }
-        if (!hasBase && checkedCount('period_ids[]') > 0) {
-            alert('وقتی ابتداییه/متوسطه انتخاب نشده، دوره نباید انتخاب شود.');
-            return false;
-        }
-
-        const classChecks = Array.from(form.querySelectorAll('input[name="class_ids[]"]:checked'));
-        for (const item of classChecks) {
-            const classLevelId = item.dataset.classLevelId || '';
-            if (classLevelId && !levelIds.includes(classLevelId)) {
-                alert('سطح صنف‌های انتخابی باید داخل سطوح تدریس باشد.');
-                return false;
-            }
-        }
-
         if (!accountEmail || !accountEmail.value.trim() || !accountEmail.checkValidity()) {
             alert('ایمیل حساب استاد معتبر نیست.');
             if (accountEmail) accountEmail.focus();
@@ -381,15 +384,27 @@ $mustSetPassword = empty($linkedUser['id']);
         return true;
     }
 
+    function customValidate(stepIndex) {
+        if (stepIndex === 0) {
+            if (!birthDateHidden || !/^\d{4}-\d{2}-\d{2}$/.test(birthDateHidden.value || '')) {
+                alert('تاریخ تولد هجری شمسی را درست انتخاب کنید.');
+                showStep(0);
+                return false;
+            }
+        }
+
+        if (stepIndex === 3) {
+            return customValidateTeaching();
+        }
+
+        return true;
+    }
+
     function validateCurrentStep() {
         const panel = panels[currentStep];
         if (!panel) return false;
         if (!validateNative(panel)) return false;
-
-        if (currentStep === 3) {
-            return customValidateTeaching();
-        }
-        return true;
+        return customValidate(currentStep);
     }
 
     nextBtn.addEventListener('click', () => {
@@ -408,16 +423,22 @@ $mustSetPassword = empty($linkedUser['id']);
     });
 
     form.addEventListener('submit', (e) => {
+        syncBirthHidden();
         for (let i = 0; i < panels.length; i += 1) {
-            currentStep = i;
+            showStep(i);
             if (!validateCurrentStep()) {
                 e.preventDefault();
-                showStep(i);
                 return;
             }
         }
     });
 
+    if (birthDateDay) birthDateDay.addEventListener('change', syncBirthHidden);
+    if (birthDateMonth) birthDateMonth.addEventListener('change', syncBirthHidden);
+    if (birthDateYear) birthDateYear.addEventListener('change', syncBirthHidden);
+
+    setBirthFromExisting();
+    syncBirthHidden();
     showStep(0);
 })();
 </script>
