@@ -264,6 +264,7 @@ CREATE TABLE IF NOT EXISTS students (
     village VARCHAR(150) NULL,
     district VARCHAR(150) NULL,
     area VARCHAR(150) NULL,
+    current_street VARCHAR(150) NULL,
     time_start TIME NULL,
     time_end TIME NULL,
     permanent_address TEXT NULL,
@@ -279,6 +280,22 @@ CREATE TABLE IF NOT EXISTS students (
     CONSTRAINT fk_students_class FOREIGN KEY (school_class_id) REFERENCES school_classes(id) ON DELETE SET NULL,
     CONSTRAINT fk_students_level FOREIGN KEY (level_id) REFERENCES study_levels(id) ON DELETE SET NULL
 ) ENGINE=InnoDB;
+
+SET @has_students_current_street := (
+    SELECT COUNT(*)
+    FROM information_schema.columns
+    WHERE table_schema = DATABASE()
+      AND table_name = 'students'
+      AND column_name = 'current_street'
+);
+SET @add_students_current_street_sql := IF(
+    @has_students_current_street = 0,
+    'ALTER TABLE students ADD COLUMN current_street VARCHAR(150) NULL AFTER area',
+    'SELECT 1'
+);
+PREPARE add_students_current_street_stmt FROM @add_students_current_street_sql;
+EXECUTE add_students_current_street_stmt;
+DEALLOCATE PREPARE add_students_current_street_stmt;
 
 SET @has_fk_users_student := (
     SELECT COUNT(*)

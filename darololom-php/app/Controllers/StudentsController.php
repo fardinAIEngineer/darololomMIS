@@ -150,17 +150,17 @@ final class StudentsController extends Controller
 
         $stmt = $db->prepare('INSERT INTO students (
             name, father_name, grandfather_name, birth_date, id_number, exam_number,
-            gender, current_address, village, district, area, time_start, time_end,
+            gender, current_address, village, district, area, current_street, time_start, time_end,
             permanent_address, school_class_id, mobile_number, image_path, certificate_file,
-            level_id, is_grade12_graduate, is_graduated, certificate_number, created_at
+            level_id, created_at
         ) VALUES (
             :name, :father_name, :grandfather_name, :birth_date, :id_number, :exam_number,
-            :gender, :current_address, :village, :district, :area, :time_start, :time_end,
+            :gender, :current_address, :village, :district, :area, :current_street, :time_start, :time_end,
             :permanent_address, :school_class_id, :mobile_number, :image_path, :certificate_file,
-            :level_id, :is_grade12_graduate, :is_graduated, :certificate_number, NOW()
+            :level_id, NOW()
         )');
 
-        $stmt->execute($this->payload($image, $certificate));
+        $stmt->execute($this->payload($image, $certificate, (string) ($validation['exam_number'] ?? '')));
         $studentId = (int) $db->lastInsertId();
 
         $this->syncSemesters($studentId, $validation['semester_ids']);
@@ -251,7 +251,7 @@ final class StudentsController extends Controller
             $this->redirect('/students/' . $id . '/edit');
         }
 
-        $payload = $this->payload($image, $certificate);
+        $payload = $this->payload($image, $certificate, (string) ($validation['exam_number'] ?? ''));
         $payload['id'] = $id;
 
         $update = $db->prepare('UPDATE students SET
@@ -266,6 +266,7 @@ final class StudentsController extends Controller
             village = :village,
             district = :district,
             area = :area,
+            current_street = :current_street,
             time_start = :time_start,
             time_end = :time_end,
             permanent_address = :permanent_address,
@@ -274,9 +275,9 @@ final class StudentsController extends Controller
             image_path = :image_path,
             certificate_file = :certificate_file,
             level_id = :level_id,
-            is_grade12_graduate = :is_grade12_graduate,
-            is_graduated = :is_graduated,
-            certificate_number = :certificate_number
+            is_grade12_graduate = 0,
+            is_graduated = 0,
+            certificate_number = NULL
             WHERE id = :id');
 
         $update->execute($payload);
@@ -536,7 +537,7 @@ final class StudentsController extends Controller
         return [
             'levels' => $db->query('SELECT * FROM study_levels ORDER BY id')->fetchAll(),
             'classes' => $db->query('SELECT sc.*, l.name AS level_name FROM school_classes sc LEFT JOIN study_levels l ON l.id = sc.level_id ORDER BY sc.name')->fetchAll(),
-            'semesters' => $db->query('SELECT * FROM semesters WHERE number BETWEEN 1 AND 4 ORDER BY number')->fetchAll(),
+            'semesters' => $db->query('SELECT * FROM semesters WHERE number IN (13, 14) ORDER BY number')->fetchAll(),
             'periods' => $db->query('SELECT * FROM course_periods ORDER BY number')->fetchAll(),
         ];
     }
@@ -633,7 +634,7 @@ final class StudentsController extends Controller
         return substr($base, 0, 35) . '_' . bin2hex(random_bytes(6));
     }
 
-    private function payload(?string $imagePath, ?string $certificatePath): array
+    private function payload(?string $imagePath, ?string $certificatePath, string $examNumber): array
     {
         return [
             'name' => trim((string) ($_POST['name'] ?? '')),
@@ -641,12 +642,13 @@ final class StudentsController extends Controller
             'grandfather_name' => trim((string) ($_POST['grandfather_name'] ?? '')),
             'birth_date' => (($_POST['birth_date'] ?? '') !== '') ? $_POST['birth_date'] : null,
             'id_number' => trim((string) ($_POST['id_number'] ?? '')),
-            'exam_number' => trim((string) ($_POST['exam_number'] ?? '')),
+            'exam_number' => $examNumber,
             'gender' => in_array(($_POST['gender'] ?? 'male'), ['male', 'female'], true) ? $_POST['gender'] : 'male',
             'current_address' => trim((string) ($_POST['current_address'] ?? '')),
             'village' => trim((string) ($_POST['village'] ?? '')),
             'district' => trim((string) ($_POST['district'] ?? '')),
             'area' => trim((string) ($_POST['area'] ?? '')),
+            'current_street' => trim((string) ($_POST['current_street'] ?? '')),
             'time_start' => (($_POST['time_start'] ?? '') !== '') ? $_POST['time_start'] : null,
             'time_end' => (($_POST['time_end'] ?? '') !== '') ? $_POST['time_end'] : null,
             'permanent_address' => trim((string) ($_POST['permanent_address'] ?? '')),
@@ -655,9 +657,6 @@ final class StudentsController extends Controller
             'image_path' => $imagePath,
             'certificate_file' => $certificatePath,
             'level_id' => (int) ($_POST['level_id'] ?? 0) ?: null,
-            'is_grade12_graduate' => isset($_POST['is_grade12_graduate']) ? 1 : 0,
-            'is_graduated' => isset($_POST['is_graduated']) ? 1 : 0,
-            'certificate_number' => trim((string) ($_POST['certificate_number'] ?? '')) ?: null,
         ];
     }
 
@@ -716,7 +715,8 @@ final class StudentsController extends Controller
      *     semester_ids:array<int>,
      *     period_ids:array<int>,
      *     account_email?:string,
-     *     account_password_hash?:?string
+     *     account_password_hash?:?string,
+     *     exam_number?:string
      * }
      */
     private function validateStudentInput(?array $existingStudent, ?int $studentId, ?array $linkedUser): array
@@ -729,16 +729,18 @@ final class StudentsController extends Controller
         $examNumber = trim((string) ($_POST['exam_number'] ?? ''));
         $mobileNumber = trim((string) ($_POST['mobile_number'] ?? ''));
         $currentAddress = trim((string) ($_POST['current_address'] ?? ''));
+        $currentStreet = trim((string) ($_POST['current_street'] ?? ''));
         $permanentAddress = trim((string) ($_POST['permanent_address'] ?? ''));
         $village = trim((string) ($_POST['village'] ?? ''));
         $district = trim((string) ($_POST['district'] ?? ''));
         $area = trim((string) ($_POST['area'] ?? ''));
         $timeStart = trim((string) ($_POST['time_start'] ?? ''));
         $timeEnd = trim((string) ($_POST['time_end'] ?? ''));
-        $certificateNumber = trim((string) ($_POST['certificate_number'] ?? ''));
         $gender = (string) ($_POST['gender'] ?? '');
         $levelId = (int) ($_POST['level_id'] ?? 0);
         $schoolClassId = (int) ($_POST['school_class_id'] ?? 0);
+        $semesterId = (int) ($_POST['semester_id'] ?? 0);
+        $periodId = (int) ($_POST['period_id'] ?? 0);
         $accountEmail = mb_strtolower(trim((string) ($_POST['account_email'] ?? '')));
         $accountPassword = (string) ($_POST['account_password'] ?? '');
         $accountPasswordConfirmation = (string) ($_POST['account_password_confirmation'] ?? '');
@@ -764,20 +766,23 @@ final class StudentsController extends Controller
         if ($mobileNumber === '' || !preg_match('/^[0-9+\-\s]{7,20}$/', $mobileNumber)) {
             return ['valid' => false, 'error' => 'شماره تماس معتبر نیست. نمونه: 0700123456', 'semester_ids' => [], 'period_ids' => []];
         }
-        if ($currentAddress === '' || mb_strlen($currentAddress) < 2) {
-            return ['valid' => false, 'error' => 'نشانی فعلی را وارد کنید.', 'semester_ids' => [], 'period_ids' => []];
-        }
         if ($permanentAddress === '' || mb_strlen($permanentAddress) < 2) {
-            return ['valid' => false, 'error' => 'نشانی دایمی را وارد کنید.', 'semester_ids' => [], 'period_ids' => []];
-        }
-        if ($village === '' || mb_strlen($village) > 150) {
-            return ['valid' => false, 'error' => 'قریه را درست وارد کنید.', 'semester_ids' => [], 'period_ids' => []];
+            return ['valid' => false, 'error' => 'ولایت سکونت اصلی را وارد کنید.', 'semester_ids' => [], 'period_ids' => []];
         }
         if ($district === '' || mb_strlen($district) > 150) {
-            return ['valid' => false, 'error' => 'ولسوالی را درست وارد کنید.', 'semester_ids' => [], 'period_ids' => []];
+            return ['valid' => false, 'error' => 'ولسوالی سکونت اصلی را درست وارد کنید.', 'semester_ids' => [], 'period_ids' => []];
+        }
+        if ($village === '' || mb_strlen($village) > 150) {
+            return ['valid' => false, 'error' => 'قریه سکونت اصلی را درست وارد کنید.', 'semester_ids' => [], 'period_ids' => []];
+        }
+        if ($currentAddress === '' || mb_strlen($currentAddress) < 2) {
+            return ['valid' => false, 'error' => 'ولایت سکونت فعلی را وارد کنید.', 'semester_ids' => [], 'period_ids' => []];
         }
         if ($area === '' || mb_strlen($area) > 150) {
-            return ['valid' => false, 'error' => 'ناحیه را درست وارد کنید.', 'semester_ids' => [], 'period_ids' => []];
+            return ['valid' => false, 'error' => 'ناحیه سکونت فعلی را درست وارد کنید.', 'semester_ids' => [], 'period_ids' => []];
+        }
+        if ($currentStreet === '' || mb_strlen($currentStreet) > 150) {
+            return ['valid' => false, 'error' => 'کوچه سکونت فعلی را درست وارد کنید.', 'semester_ids' => [], 'period_ids' => []];
         }
 
         if ($timeStart !== '' && !$this->isValidTime($timeStart)) {
@@ -865,14 +870,11 @@ final class StudentsController extends Controller
             }
         }
 
-        $semesterIds = $this->normalizeIdArray($_POST['semester_ids'] ?? []);
-        $periodIds = $this->normalizeIdArray($_POST['period_ids'] ?? []);
-
-        if ($semesterIds !== [] && !$this->allIdsExist('semesters', $semesterIds)) {
-            return ['valid' => false, 'error' => 'سمسترهای انتخاب‌شده معتبر نیست.', 'semester_ids' => [], 'period_ids' => []];
+        if ($semesterId > 0 && !$this->allIdsExist('semesters', [$semesterId])) {
+            return ['valid' => false, 'error' => 'گزینه صنف انتخاب‌شده معتبر نیست.', 'semester_ids' => [], 'period_ids' => []];
         }
-        if ($periodIds !== [] && !$this->allIdsExist('course_periods', $periodIds)) {
-            return ['valid' => false, 'error' => 'دوره‌های انتخاب‌شده معتبر نیست.', 'semester_ids' => [], 'period_ids' => []];
+        if ($periodId > 0 && !$this->allIdsExist('course_periods', [$periodId])) {
+            return ['valid' => false, 'error' => 'دوره انتخاب‌شده معتبر نیست.', 'semester_ids' => [], 'period_ids' => []];
         }
 
         $imageValidation = $this->validateUploadedFile('image', ['jpg', 'jpeg', 'png', 'webp'], 2 * 1024 * 1024, false, 'عکس');
@@ -887,55 +889,43 @@ final class StudentsController extends Controller
         }
 
         if ($levelCode === 'aali') {
-            if (!isset($_POST['is_grade12_graduate'])) {
-                return ['valid' => false, 'error' => 'برای سطح عالی، گزینه فارغ صنف دوازدهم باید فعال باشد.', 'semester_ids' => [], 'period_ids' => []];
-            }
             if ($examNumber === '' || mb_strlen($examNumber) > 100 || !preg_match('/^[0-9A-Za-z\-\/\s]+$/u', $examNumber)) {
                 return ['valid' => false, 'error' => 'برای سطح عالی، نمبر کانکور الزامی و معتبر است.', 'semester_ids' => [], 'period_ids' => []];
             }
-            if (count($semesterIds) !== 1) {
-                return ['valid' => false, 'error' => 'برای سطح عالی دقیقاً یک سمستر انتخاب کنید.', 'semester_ids' => [], 'period_ids' => []];
+            if ($semesterId <= 0) {
+                return ['valid' => false, 'error' => 'برای سطح عالی فقط یکی از صنف‌های ۱۳ یا ۱۴ را انتخاب کنید.', 'semester_ids' => [], 'period_ids' => []];
+            }
+            if ($periodId > 0) {
+                return ['valid' => false, 'error' => 'برای سطح عالی نباید دوره انتخاب شود.', 'semester_ids' => [], 'period_ids' => []];
+            }
+
+            $semesterNumberStmt = $db->prepare('SELECT number FROM semesters WHERE id = :id LIMIT 1');
+            $semesterNumberStmt->execute(['id' => $semesterId]);
+            $semesterNumber = (int) ($semesterNumberStmt->fetchColumn() ?: 0);
+            if (!in_array($semesterNumber, [13, 14], true)) {
+                return ['valid' => false, 'error' => 'برای سطح عالی فقط صنف ۱۳ یا صنف ۱۴ قابل انتخاب است.', 'semester_ids' => [], 'period_ids' => []];
             }
         } else {
-            if (count($periodIds) !== 1) {
+            if ($examNumber !== '') {
+                return ['valid' => false, 'error' => 'برای سطح متوسطه و ابتداییه نمبر امتحان کانکور نیاز نیست.', 'semester_ids' => [], 'period_ids' => []];
+            }
+            if ($periodId <= 0) {
                 return ['valid' => false, 'error' => 'برای ابتداییه/متوسطه دقیقاً یک دوره انتخاب کنید.', 'semester_ids' => [], 'period_ids' => []];
             }
-        }
-
-        if ($certificateNumber !== '') {
-            if (mb_strlen($certificateNumber) > 50 || !preg_match('/^[0-9A-Za-z\-\/]+$/', $certificateNumber)) {
-                return ['valid' => false, 'error' => 'شماره سرتفیکت معتبر نیست.', 'semester_ids' => [], 'period_ids' => []];
-            }
-
-            if ($this->certificateNumberExists($certificateNumber, $studentId)) {
-                return ['valid' => false, 'error' => 'شماره سرتفیکت تکراری است.', 'semester_ids' => [], 'period_ids' => []];
+            if ($semesterId > 0) {
+                return ['valid' => false, 'error' => 'برای ابتداییه/متوسطه نباید صنف ۱۳/۱۴ انتخاب شود.', 'semester_ids' => [], 'period_ids' => []];
             }
         }
 
         return [
             'valid' => true,
             'error' => '',
-            'semester_ids' => $levelCode === 'aali' ? $semesterIds : [],
-            'period_ids' => $levelCode === 'aali' ? [] : $periodIds,
+            'semester_ids' => $levelCode === 'aali' ? [$semesterId] : [],
+            'period_ids' => $levelCode === 'aali' ? [] : [$periodId],
             'account_email' => $accountEmail,
             'account_password_hash' => $accountPassword !== '' ? password_hash($accountPassword, PASSWORD_DEFAULT) : null,
+            'exam_number' => $levelCode === 'aali' ? $examNumber : '',
         ];
-    }
-
-    private function normalizeIdArray(mixed $input): array
-    {
-        if (!is_array($input)) {
-            return [];
-        }
-
-        $normalized = [];
-        foreach ($input as $value) {
-            $id = (int) $value;
-            if ($id > 0) {
-                $normalized[$id] = $id;
-            }
-        }
-        return array_values($normalized);
     }
 
     private function allIdsExist(string $table, array $ids): bool
@@ -949,24 +939,6 @@ final class StudentsController extends Controller
         $stmt = $db->prepare("SELECT COUNT(*) FROM {$table} WHERE id IN ($placeholders)");
         $stmt->execute($ids);
         return (int) $stmt->fetchColumn() === count($ids);
-    }
-
-    private function certificateNumberExists(string $certificateNumber, ?int $studentId): bool
-    {
-        $db = Database::connection();
-
-        if ($studentId === null) {
-            $stmt = $db->prepare('SELECT id FROM students WHERE certificate_number = :certificate_number LIMIT 1');
-            $stmt->execute(['certificate_number' => $certificateNumber]);
-            return (bool) $stmt->fetch();
-        }
-
-        $stmt = $db->prepare('SELECT id FROM students WHERE certificate_number = :certificate_number AND id <> :student_id LIMIT 1');
-        $stmt->execute([
-            'certificate_number' => $certificateNumber,
-            'student_id' => $studentId,
-        ]);
-        return (bool) $stmt->fetch();
     }
 
     private function isValidDate(string $date): bool

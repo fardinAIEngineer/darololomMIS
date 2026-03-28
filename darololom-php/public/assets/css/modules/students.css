@@ -56,6 +56,23 @@
     font-size: 12px;
 }
 
+.jalali-date-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+}
+
+#school_class_search {
+    direction: rtl;
+}
+
+#exam_number_block,
+#semester_block,
+#period_block,
+#certificate_block {
+    transition: all 0.2s ease;
+}
+
 .student-form-grid .check-group {
     display: flex;
     flex-direction: column;
@@ -88,6 +105,10 @@
 
     .wizard-panel,
     .wizard-panel.is-active {
+        grid-template-columns: 1fr;
+    }
+
+    .jalali-date-grid {
         grid-template-columns: 1fr;
     }
 }

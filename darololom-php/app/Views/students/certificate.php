@@ -8,7 +8,6 @@
         <p>این سند به نام <strong><?= e($student['name']) ?></strong> فرزند <strong><?= e($student['father_name'] ?: '—') ?></strong> صادر می‌گردد.</p>
         <p>سطح آموزشی: <strong><?= e($student['level_name'] ?? '—') ?></strong></p>
         <p>صنف: <strong><?= e($student['class_name'] ?? '—') ?></strong></p>
-        <p>شماره سرتفیکت: <strong><?= e((string) ($student['certificate_number'] ?? '—')) ?></strong></p>
         <p>تاریخ: <strong><?= e(date('Y-m-d')) ?></strong></p>
 
         <div class="signature-row">
