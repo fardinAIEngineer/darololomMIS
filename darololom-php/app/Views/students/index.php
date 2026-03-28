@@ -35,8 +35,8 @@ $totalPages = max(1, (int) ceil($total / max(1, $pageSize)));
                 <th>نام</th>
                 <th>نام پدر</th>
                 <th>سطح</th>
-                <th>صنف</th>
-                <th>سمستر/دوره</th>
+                <th>نام صنف</th>
+                <th>صنف/دوره</th>
                 <th>امتیاز</th>
                 <th>عملیات</th>
             </tr>

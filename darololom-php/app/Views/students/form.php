@@ -198,6 +198,13 @@ $jalaliMonths = ['حمل', 'ثور', 'جوزا', 'سرطان', 'اسد', 'سنب
                     </select>
                     <small class="field-help">در هر زمان فقط یک دوره قابل انتخاب است.</small>
                 </div>
+
+                <div class="form-group" id="certificate_block">
+                    <label>آپلود شهادت‌نامه (PDF)</label>
+                    <input class="form-control" type="file" name="certificate_file" id="certificate_file" accept=".pdf,application/pdf">
+                    <small class="field-help">این فیلد فقط برای سطح عالی نمایش داده می‌شود.</small>
+                    <?php if (!empty($studentData['certificate_file'])): ?><a href="<?= e(url((string) $studentData['certificate_file'])) ?>" target="_blank">نمایش فایل فعلی</a><?php endif; ?>
+                </div>
             </section>
 
             <section class="wizard-panel" data-step-panel="3">
@@ -238,13 +245,6 @@ $jalaliMonths = ['حمل', 'ثور', 'جوزا', 'سرطان', 'اسد', 'سنب
                     <input class="form-control" type="file" name="image" accept=".jpg,.jpeg,.png,.webp,image/*">
                     <small class="field-help">فرمت مجاز: JPG/PNG/WEBP | حداکثر 2MB</small>
                     <?php if (!empty($student['image_path'])): ?><a href="<?= e(url((string) $student['image_path'])) ?>" target="_blank">نمایش فایل فعلی</a><?php endif; ?>
-                </div>
-
-                <div class="form-group" id="certificate_block">
-                    <label>آپلود شهادت‌نامه (PDF)</label>
-                    <input class="form-control" type="file" name="certificate_file" id="certificate_file" accept=".pdf,application/pdf">
-                    <small class="field-help">برای سطح عالی الزامی است | حداکثر 5MB</small>
-                    <?php if (!empty($student['certificate_file'])): ?><a href="<?= e(url((string) $student['certificate_file'])) ?>" target="_blank">نمایش فایل فعلی</a><?php endif; ?>
                 </div>
 
                 <div class="form-group">
@@ -554,111 +554,123 @@ $jalaliMonths = ['حمل', 'ثور', 'جوزا', 'سرطان', 'اسد', 'سنب
         renderClassList();
     }
 
-    function customValidate() {
-        if (!birthDateHidden || !/^\d{4}-\d{2}-\d{2}$/.test(birthDateHidden.value || '')) {
-            alert('تاریخ تولد هجری شمسی را درست انتخاب کنید.');
-            showStep(0);
-            return false;
+    function customValidate(stepIndex) {
+        if (stepIndex === 0) {
+            if (!birthDateHidden || !/^\d{4}-\d{2}-\d{2}$/.test(birthDateHidden.value || '')) {
+                alert('تاریخ تولد هجری شمسی را درست انتخاب کنید.');
+                showStep(0);
+                return false;
+            }
+            return true;
         }
 
-        const levelCode = selectedLevelCode();
-        if (levelSelect && !levelSelect.value) {
-            alert('لطفاً سطح آموزشی را انتخاب کنید.');
-            showStep(1);
-            return false;
-        }
-
-        if (schoolClassSearch && schoolClassSearch.value.trim() !== '' && schoolClassIdInput && !schoolClassIdInput.value) {
-            alert('صنف واردشده معتبر نیست. لطفاً از لیست جستجو انتخاب کنید.');
-            showStep(1);
-            schoolClassSearch.focus();
-            return false;
-        }
-
-        if (schoolClassIdInput && schoolClassIdInput.value && levelSelect && levelSelect.value) {
-            const selectedClass = classById(schoolClassIdInput.value);
-            if (selectedClass && parseInt(selectedClass.level_id || 0, 10) !== parseInt(levelSelect.value || '0', 10)) {
-                alert('سطح صنف با سطح آموزشی انتخاب‌شده مطابقت ندارد.');
+        if (stepIndex === 1) {
+            const levelCode = selectedLevelCode();
+            if (levelSelect && !levelSelect.value) {
+                alert('لطفاً سطح آموزشی را انتخاب کنید.');
                 showStep(1);
                 return false;
             }
+
+            if (schoolClassSearch && schoolClassSearch.value.trim() !== '' && schoolClassIdInput && !schoolClassIdInput.value) {
+                alert('صنف واردشده معتبر نیست. لطفاً از لیست جستجو انتخاب کنید.');
+                showStep(1);
+                schoolClassSearch.focus();
+                return false;
+            }
+
+            if (schoolClassIdInput && schoolClassIdInput.value && levelSelect && levelSelect.value) {
+                const selectedClass = classById(schoolClassIdInput.value);
+                if (selectedClass && parseInt(selectedClass.level_id || 0, 10) !== parseInt(levelSelect.value || '0', 10)) {
+                    alert('سطح صنف با سطح آموزشی انتخاب‌شده مطابقت ندارد.');
+                    showStep(1);
+                    return false;
+                }
+            }
+
+            if (levelCode === 'aali') {
+                if (!examInput || examInput.value.trim() === '') {
+                    alert('برای سطح عالی، نمبر امتحان کانکور الزامی است.');
+                    showStep(1);
+                    if (examInput) examInput.focus();
+                    return false;
+                }
+                if (!semesterSelect || !semesterSelect.value) {
+                    alert('برای سطح عالی یکی از صنف‌های ۱۳ یا ۱۴ را انتخاب کنید.');
+                    showStep(1);
+                    if (semesterSelect) semesterSelect.focus();
+                    return false;
+                }
+                if (periodSelect && periodSelect.value) {
+                    alert('برای سطح عالی نباید دوره انتخاب شود.');
+                    showStep(1);
+                    return false;
+                }
+                if (certificateInput && certificateInput.files.length === 0 && !hasExistingCertificate) {
+                    alert('برای سطح عالی، آپلود شهادت‌نامه الزامی است.');
+                    showStep(1);
+                    return false;
+                }
+            } else {
+                if (!periodSelect || !periodSelect.value) {
+                    alert('برای سطح ابتداییه/متوسطه دقیقاً یک دوره انتخاب کنید.');
+                    showStep(1);
+                    if (periodSelect) periodSelect.focus();
+                    return false;
+                }
+                if (semesterSelect && semesterSelect.value) {
+                    alert('برای سطح ابتداییه/متوسطه نباید صنف ۱۳/۱۴ انتخاب شود.');
+                    showStep(1);
+                    return false;
+                }
+            }
+
+            return true;
         }
 
-        if (levelCode === 'aali') {
-            if (!examInput || examInput.value.trim() === '') {
-                alert('برای سطح عالی، نمبر امتحان کانکور الزامی است.');
-                showStep(1);
-                if (examInput) examInput.focus();
+        if (stepIndex === 2) {
+            if (timeStart && timeEnd && timeStart.value && timeEnd.value && timeStart.value >= timeEnd.value) {
+                alert('تایم ختم باید بعد از تایم آغاز باشد.');
+                showStep(2);
                 return false;
             }
-            if (!semesterSelect || !semesterSelect.value) {
-                alert('برای سطح عالی یکی از صنف‌های ۱۳ یا ۱۴ را انتخاب کنید.');
-                showStep(1);
-                if (semesterSelect) semesterSelect.focus();
-                return false;
-            }
-            if (periodSelect && periodSelect.value) {
-                alert('برای سطح عالی نباید دوره انتخاب شود.');
-                showStep(1);
-                return false;
-            }
-            if (certificateInput && certificateInput.files.length === 0 && !hasExistingCertificate) {
-                alert('برای سطح عالی، آپلود شهادت‌نامه الزامی است.');
+            return true;
+        }
+
+        if (stepIndex === 3) {
+            if (!accountEmail || !accountEmail.value.trim() || !accountEmail.checkValidity()) {
+                alert('ایمیل حساب شاگرد معتبر نیست.');
                 showStep(3);
+                if (accountEmail) accountEmail.focus();
                 return false;
             }
-        } else {
-            if (!periodSelect || !periodSelect.value) {
-                alert('برای سطح ابتداییه/متوسطه دقیقاً یک دوره انتخاب کنید.');
-                showStep(1);
-                if (periodSelect) periodSelect.focus();
-                return false;
-            }
-            if (semesterSelect && semesterSelect.value) {
-                alert('برای سطح ابتداییه/متوسطه نباید صنف ۱۳/۱۴ انتخاب شود.');
-                showStep(1);
-                return false;
-            }
-        }
 
-        if (timeStart && timeEnd && timeStart.value && timeEnd.value && timeStart.value >= timeEnd.value) {
-            alert('تایم ختم باید بعد از تایم آغاز باشد.');
-            showStep(2);
-            return false;
-        }
-
-        if (!accountEmail || !accountEmail.value.trim() || !accountEmail.checkValidity()) {
-            alert('ایمیل حساب شاگرد معتبر نیست.');
-            showStep(3);
-            if (accountEmail) accountEmail.focus();
-            return false;
-        }
-
-        if (mustSetPassword && (!accountPassword || accountPassword.value.trim() === '')) {
-            alert('برای ایجاد حساب شاگرد، رمز عبور الزامی است.');
-            showStep(3);
-            if (accountPassword) accountPassword.focus();
-            return false;
-        }
-
-        if (accountPassword && accountPassword.value !== '') {
-            if (accountPassword.value.length < 8) {
-                alert('رمز عبور حساب شاگرد باید حداقل ۸ کاراکتر باشد.');
+            if (mustSetPassword && (!accountPassword || accountPassword.value.trim() === '')) {
+                alert('برای ایجاد حساب شاگرد، رمز عبور الزامی است.');
                 showStep(3);
-                accountPassword.focus();
+                if (accountPassword) accountPassword.focus();
                 return false;
             }
-            if (!accountPasswordConfirm || accountPassword.value !== accountPasswordConfirm.value) {
-                alert('تکرار رمز عبور حساب شاگرد یکسان نیست.');
+
+            if (accountPassword && accountPassword.value !== '') {
+                if (accountPassword.value.length < 8) {
+                    alert('رمز عبور حساب شاگرد باید حداقل ۸ کاراکتر باشد.');
+                    showStep(3);
+                    accountPassword.focus();
+                    return false;
+                }
+                if (!accountPasswordConfirm || accountPassword.value !== accountPasswordConfirm.value) {
+                    alert('تکرار رمز عبور حساب شاگرد یکسان نیست.');
+                    showStep(3);
+                    if (accountPasswordConfirm) accountPasswordConfirm.focus();
+                    return false;
+                }
+            } else if (accountPasswordConfirm && accountPasswordConfirm.value !== '') {
+                alert('برای تکرار رمز، ابتدا رمز عبور جدید را وارد کنید.');
                 showStep(3);
-                if (accountPasswordConfirm) accountPasswordConfirm.focus();
+                if (accountPassword) accountPassword.focus();
                 return false;
             }
-        } else if (accountPasswordConfirm && accountPasswordConfirm.value !== '') {
-            alert('برای تکرار رمز، ابتدا رمز عبور جدید را وارد کنید.');
-            showStep(3);
-            if (accountPassword) accountPassword.focus();
-            return false;
         }
 
         return true;
@@ -668,10 +680,7 @@ $jalaliMonths = ['حمل', 'ثور', 'جوزا', 'سرطان', 'اسد', 'سنب
         const panel = panels[currentStep];
         if (!panel) return false;
         if (!validateNative(panel)) return false;
-        if (currentStep === 1 || currentStep === 3) {
-            return customValidate();
-        }
-        return true;
+        return customValidate(currentStep);
     }
 
     nextBtn.addEventListener('click', () => {
