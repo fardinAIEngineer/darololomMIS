@@ -404,9 +404,39 @@ final class StudentsController extends Controller
             $this->redirect('/students');
         }
 
+        $countStmt = $db->prepare('SELECT COUNT(*) FROM student_behaviors WHERE student_id = :id AND entry_type = :type');
+        $countStmt->execute(['id' => $id, 'type' => 'merit']);
+        $meritCount = (int) $countStmt->fetchColumn();
+        if ($meritCount < 3) {
+            flash('error', 'برای چاپ سرتفیکت، حداقل ۳ امتیاز لازم است.');
+            $this->redirect('/students');
+        }
+
+        if (trim((string) ($student['certificate_number'] ?? '')) === '') {
+            $certificateCheck = $db->prepare('SELECT COUNT(*) FROM students WHERE certificate_number = :certificate_number');
+            $certificateUpdate = $db->prepare('UPDATE students SET certificate_number = :certificate_number WHERE id = :id');
+
+            for ($i = 0; $i < 20; $i++) {
+                $candidate = 'cert-primary-' . str_pad((string) random_int(0, 99999999), 8, '0', STR_PAD_LEFT);
+                $certificateCheck->execute(['certificate_number' => $candidate]);
+                if ((int) $certificateCheck->fetchColumn() === 0) {
+                    $certificateUpdate->execute([
+                        'certificate_number' => $candidate,
+                        'id' => $id,
+                    ]);
+                    $student['certificate_number'] = $candidate;
+                    break;
+                }
+            }
+        }
+
         $this->render('students/certificate', [
             'title' => 'سرتفیکت دانش‌آموز',
             'student' => $student,
+            'meritCount' => $meritCount,
+            'currentDate' => str_replace('-', '/', $this->todayJalaliDate()),
+            'qrCodeDataUri' => null,
+            'use_layout' => false,
         ]);
     }
 

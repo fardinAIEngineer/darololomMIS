@@ -1,5 +1,9 @@
 <?php
 $totalPages = max(1, (int) ceil($total / max(1, $pageSize)));
+$behaviorJsonFlags = JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES;
+if (defined('JSON_INVALID_UTF8_SUBSTITUTE')) {
+    $behaviorJsonFlags |= JSON_INVALID_UTF8_SUBSTITUTE;
+}
 ?>
 
 <div class="section-title">
@@ -38,6 +42,14 @@ $totalPages = max(1, (int) ceil($total / max(1, $pageSize)));
             </thead>
             <tbody>
             <?php foreach ($teachers as $teacher): ?>
+                <?php
+                $teacherBehaviors = $behaviors[(int) $teacher['id']] ?? [];
+                $teacherBehaviorsJson = json_encode(array_values($teacherBehaviors), $behaviorJsonFlags);
+                if ($teacherBehaviorsJson === false) {
+                    $teacherBehaviorsJson = '[]';
+                }
+                $meritCount = (int) ($teacher['merit_count'] ?? 0);
+                ?>
                 <tr>
                     <td><?= e($teacher['name']) ?></td>
                     <td><?= e($teacher['father_name'] ?: '—') ?></td>
@@ -52,51 +64,28 @@ $totalPages = max(1, (int) ceil($total / max(1, $pageSize)));
                     <td class="actions-cell">
                         <?php if (can('manage_teachers')): ?>
                             <a class="btn btn-xs btn-info" href="<?= e(url('/teachers/' . $teacher['id'] . '/edit')) ?>">ویرایش</a>
+                            <button
+                                type="button"
+                                class="btn btn-xs btn-primary js-teacher-behavior-btn"
+                                data-teacher-id="<?= e((string) $teacher['id']) ?>"
+                                data-teacher-name="<?= e($teacher['name']) ?>"
+                                data-teacher-behaviors="<?= e($teacherBehaviorsJson) ?>"
+                            >
+                                ثبت تخلف/امتیاز
+                            </button>
                         <?php endif; ?>
                         <?php if (can('manage_contracts')): ?>
                             <a class="btn btn-xs btn-success" href="<?= e(url('/contracts/' . $teacher['id'])) ?>">قرارداد</a>
                         <?php endif; ?>
-                        <a class="btn btn-xs btn-primary" href="<?= e(url('/teachers/' . $teacher['id'] . '/appreciation')) ?>" target="_blank">تقدیرنامه</a>
+                        <?php if ($meritCount >= 3): ?>
+                            <a class="btn btn-xs btn-primary" href="<?= e(url('/teachers/' . $teacher['id'] . '/appreciation')) ?>" target="_blank">تقدیرنامه</a>
+                        <?php endif; ?>
                         <?php if (can('manage_teachers')): ?>
                             <form method="post" action="<?= e(url('/teachers/' . $teacher['id'] . '/delete')) ?>" onsubmit="return confirm('آیا مطمئن هستید؟');">
                                 <?= csrf_field() ?>
                                 <button class="btn btn-xs btn-danger" type="submit">حذف</button>
                             </form>
                         <?php endif; ?>
-                    </td>
-                </tr>
-                <tr class="behavior-row">
-                    <td colspan="7">
-                        <div class="behavior-grid">
-                            <?php if (can('manage_teachers')): ?>
-                                <form class="behavior-form" method="post" action="<?= e(url('/teachers/' . $teacher['id'] . '/behavior')) ?>">
-                                    <?= csrf_field() ?>
-                                    <select name="entry_type" class="form-control" required>
-                                        <option value="merit">امتیاز</option>
-                                        <option value="violation">تخلف</option>
-                                    </select>
-                                    <input type="text" name="note" class="form-control" placeholder="یادداشت">
-                                    <button class="btn btn-default btn-sm" type="submit">ثبت</button>
-                                </form>
-                            <?php endif; ?>
-
-                            <div class="behavior-list">
-                                <?php foreach (($behaviors[$teacher['id']] ?? []) as $entry): ?>
-                                    <div class="behavior-item <?= e($entry['entry_type']) ?>">
-                                        <span>
-                                            <?= $entry['entry_type'] === 'merit' ? 'امتیاز' : 'تخلف' ?>:
-                                            <?= e($entry['note'] ?: '—') ?>
-                                        </span>
-                                        <?php if (can('manage_teachers')): ?>
-                                            <form method="post" action="<?= e(url('/teachers/behavior/' . $entry['id'] . '/delete')) ?>">
-                                                <?= csrf_field() ?>
-                                                <button class="btn btn-xs btn-link" type="submit">حذف</button>
-                                            </form>
-                                        <?php endif; ?>
-                                    </div>
-                                <?php endforeach; ?>
-                            </div>
-                        </div>
                     </td>
                 </tr>
             <?php endforeach; ?>
@@ -116,3 +105,220 @@ $totalPages = max(1, (int) ceil($total / max(1, $pageSize)));
         </div>
     </div>
 </div>
+
+<?php if (can('manage_teachers')): ?>
+    <div
+        id="teacherBehaviorModal"
+        class="behavior-modal-overlay"
+        hidden
+        data-action-template="<?= e(url('/teachers/{id}/behavior')) ?>"
+        data-delete-template="<?= e(url('/teachers/behavior/{id}/delete')) ?>"
+        data-csrf-token="<?= e(csrf_token()) ?>"
+    >
+        <div class="behavior-modal-card" role="dialog" aria-modal="true" aria-labelledby="teacherBehaviorModalTitle">
+            <div class="behavior-modal-head">
+                <div>
+                    <h3 id="teacherBehaviorModalTitle">ثبت تخلف/امتیاز</h3>
+                    <p class="behavior-modal-subtitle" id="teacherBehaviorTeacherName">—</p>
+                </div>
+                <button type="button" class="behavior-modal-close js-teacher-behavior-close" aria-label="بستن">×</button>
+            </div>
+            <div class="behavior-modal-body">
+                <div class="behavior-tab-wrap">
+                    <button type="button" class="behavior-tab is-active js-teacher-behavior-tab" data-tab="violation">تخلف</button>
+                    <button type="button" class="behavior-tab js-teacher-behavior-tab" data-tab="merit">امتیاز</button>
+                </div>
+
+                <div class="behavior-panel is-active" data-panel="violation">
+                    <form method="post" class="behavior-form-modal js-teacher-behavior-form" data-entry-type="violation">
+                        <?= csrf_field() ?>
+                        <input type="hidden" name="entry_type" value="violation">
+                        <input type="hidden" name="teacher_id" class="js-teacher-id-field" value="">
+                        <label for="teacherViolationNote">توضیحات (اختیاری)</label>
+                        <textarea id="teacherViolationNote" name="note" rows="3" class="form-control" placeholder="شرح تخلف..."></textarea>
+                        <button type="submit" class="btn btn-sm btn-danger">ثبت تخلف</button>
+                    </form>
+                    <div class="behavior-history-wrap">
+                        <h4>سوابق تخلف</h4>
+                        <div class="behavior-empty js-teacher-empty-violation">هیچ تخلفی ثبت نشده است.</div>
+                        <div class="behavior-history-list js-teacher-history-violation"></div>
+                    </div>
+                </div>
+
+                <div class="behavior-panel" data-panel="merit">
+                    <form method="post" class="behavior-form-modal js-teacher-behavior-form" data-entry-type="merit">
+                        <?= csrf_field() ?>
+                        <input type="hidden" name="entry_type" value="merit">
+                        <input type="hidden" name="teacher_id" class="js-teacher-id-field" value="">
+                        <label for="teacherMeritNote">توضیحات (اختیاری)</label>
+                        <textarea id="teacherMeritNote" name="note" rows="3" class="form-control" placeholder="شرح امتیاز..."></textarea>
+                        <button type="submit" class="btn btn-sm btn-success">ثبت امتیاز</button>
+                    </form>
+                    <div class="behavior-history-wrap">
+                        <h4>سوابق امتیاز</h4>
+                        <div class="behavior-empty js-teacher-empty-merit">هیچ امتیازی ثبت نشده است.</div>
+                        <div class="behavior-history-list js-teacher-history-merit"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    (function () {
+        var modal = document.getElementById('teacherBehaviorModal');
+        if (!modal) {
+            return;
+        }
+        modal.hidden = true;
+
+        var actionTemplate = modal.getAttribute('data-action-template') || '';
+        var deleteTemplate = modal.getAttribute('data-delete-template') || '';
+        var csrfToken = modal.getAttribute('data-csrf-token') || '';
+        var nameEl = document.getElementById('teacherBehaviorTeacherName');
+        var openButtons = document.querySelectorAll('.js-teacher-behavior-btn');
+        var closeButtons = modal.querySelectorAll('.js-teacher-behavior-close');
+        var tabs = modal.querySelectorAll('.js-teacher-behavior-tab');
+        var panels = modal.querySelectorAll('.behavior-panel');
+        var forms = modal.querySelectorAll('.js-teacher-behavior-form');
+        var idFields = modal.querySelectorAll('.js-teacher-id-field');
+        var listViolation = modal.querySelector('.js-teacher-history-violation');
+        var listMerit = modal.querySelector('.js-teacher-history-merit');
+        var emptyViolation = modal.querySelector('.js-teacher-empty-violation');
+        var emptyMerit = modal.querySelector('.js-teacher-empty-merit');
+
+        function setActiveTab(tabName) {
+            tabs.forEach(function (tab) {
+                tab.classList.toggle('is-active', tab.getAttribute('data-tab') === tabName);
+            });
+            panels.forEach(function (panel) {
+                panel.classList.toggle('is-active', panel.getAttribute('data-panel') === tabName);
+            });
+        }
+
+        function closeModal() {
+            modal.hidden = true;
+            document.body.classList.remove('behavior-modal-open');
+        }
+
+        function createDeleteForm(entryId) {
+            var form = document.createElement('form');
+            form.method = 'post';
+            form.action = deleteTemplate.replace('{id}', String(entryId));
+            form.className = 'behavior-delete-form';
+
+            var tokenInput = document.createElement('input');
+            tokenInput.type = 'hidden';
+            tokenInput.name = '_token';
+            tokenInput.value = csrfToken;
+            form.appendChild(tokenInput);
+
+            var button = document.createElement('button');
+            button.type = 'submit';
+            button.className = 'btn btn-xs btn-link';
+            button.textContent = 'حذف';
+            form.appendChild(button);
+
+            return form;
+        }
+
+        function renderHistory(entries, type, listEl, emptyEl) {
+            listEl.innerHTML = '';
+            var filtered = entries.filter(function (entry) {
+                return String(entry.entry_type || '') === type;
+            });
+
+            if (filtered.length === 0) {
+                emptyEl.style.display = 'block';
+                return;
+            }
+
+            emptyEl.style.display = 'none';
+            filtered.forEach(function (entry) {
+                var item = document.createElement('div');
+                item.className = 'behavior-history-item ' + (type === 'merit' ? 'merit' : 'violation');
+
+                var textWrap = document.createElement('div');
+                textWrap.className = 'behavior-history-text';
+
+                var note = document.createElement('span');
+                note.className = 'behavior-note';
+                note.textContent = String(entry.note || '—');
+                textWrap.appendChild(note);
+
+                var meta = document.createElement('small');
+                meta.className = 'behavior-meta';
+                meta.textContent = entry.created_at ? ('تاریخ: ' + entry.created_at) : '';
+                textWrap.appendChild(meta);
+
+                item.appendChild(textWrap);
+
+                if (entry.id) {
+                    item.appendChild(createDeleteForm(entry.id));
+                }
+
+                listEl.appendChild(item);
+            });
+        }
+
+        function openModal(button) {
+            var teacherId = button.getAttribute('data-teacher-id') || '';
+            var teacherName = button.getAttribute('data-teacher-name') || '—';
+            var rawBehaviors = button.getAttribute('data-teacher-behaviors') || '[]';
+            var parsed = [];
+
+            try {
+                parsed = JSON.parse(rawBehaviors);
+                if (!Array.isArray(parsed)) {
+                    parsed = [];
+                }
+            } catch (error) {
+                parsed = [];
+            }
+
+            nameEl.textContent = 'استاد: ' + teacherName;
+            idFields.forEach(function (field) {
+                field.value = teacherId;
+            });
+            forms.forEach(function (form) {
+                form.action = actionTemplate.replace('{id}', teacherId);
+            });
+
+            renderHistory(parsed, 'violation', listViolation, emptyViolation);
+            renderHistory(parsed, 'merit', listMerit, emptyMerit);
+            setActiveTab('violation');
+
+            modal.hidden = false;
+            document.body.classList.add('behavior-modal-open');
+        }
+
+        openButtons.forEach(function (button) {
+            button.addEventListener('click', function () {
+                openModal(button);
+            });
+        });
+
+        tabs.forEach(function (tab) {
+            tab.addEventListener('click', function () {
+                setActiveTab(tab.getAttribute('data-tab') || 'violation');
+            });
+        });
+
+        closeButtons.forEach(function (button) {
+            button.addEventListener('click', closeModal);
+        });
+
+        modal.addEventListener('click', function (event) {
+            if (event.target === modal) {
+                closeModal();
+            }
+        });
+
+        document.addEventListener('keydown', function (event) {
+            if (event.key === 'Escape' && !modal.hidden) {
+                closeModal();
+            }
+        });
+    })();
+    </script>
+<?php endif; ?>
