@@ -20,6 +20,7 @@ final class UsersController extends Controller
             'SELECT u.*, creator.full_name AS creator_name
              FROM users u
              LEFT JOIN users creator ON creator.id = u.created_by
+             WHERE u.role IN (\'super_admin\', \'admin\')
              ORDER BY u.created_at DESC'
         )->fetchAll();
 

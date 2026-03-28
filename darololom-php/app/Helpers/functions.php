@@ -101,10 +101,13 @@ function auth_login(array $user): void
         'id' => (int) ($user['id'] ?? 0),
         'full_name' => (string) ($user['full_name'] ?? ''),
         'username' => (string) ($user['username'] ?? ''),
+        'email' => (string) ($user['email'] ?? ''),
         'role' => (string) ($user['role'] ?? 'admin'),
         'permissions' => $user['permissions'] ?? '[]',
         'can_register_students' => (int) ($user['can_register_students'] ?? 0),
         'can_register_teachers' => (int) ($user['can_register_teachers'] ?? 0),
+        'student_id' => (int) ($user['student_id'] ?? 0),
+        'teacher_id' => (int) ($user['teacher_id'] ?? 0),
     ];
 }
 
@@ -118,6 +121,22 @@ function is_super_admin(): bool
 {
     $user = auth_user();
     return (string) ($user['role'] ?? '') === 'super_admin';
+}
+
+function auth_role(): string
+{
+    $user = auth_user();
+    return (string) ($user['role'] ?? '');
+}
+
+function is_teacher_user(): bool
+{
+    return auth_role() === 'teacher';
+}
+
+function is_student_user(): bool
+{
+    return auth_role() === 'student';
 }
 
 function permission_definitions(): array

@@ -64,6 +64,7 @@ $totalPages = max(1, (int) ceil($total / max(1, $pageSize)));
                         <?php endif; ?>
                         <a class="btn btn-xs btn-success" href="<?= e(url('/students/' . $student['id'] . '/results')) ?>">نتایج</a>
                         <a class="btn btn-xs btn-primary" href="<?= e(url('/students/' . $student['id'] . '/appreciation')) ?>" target="_blank">تقدیرنامه</a>
+                        <a class="btn btn-xs btn-default" href="<?= e(url('/students/' . $student['id'] . '/id-card')) ?>" target="_blank">ای‌دی کارت</a>
                         <a class="btn btn-xs btn-warning" href="<?= e(url('/students/' . $student['id'] . '/certificate')) ?>">سرتفیکت</a>
                         <?php if (can('manage_students')): ?>
                             <form method="post" action="<?= e(url('/students/' . $student['id'] . '/promote/moteseta')) ?>" onsubmit="return confirm('دانش‌آموز به متوسطه ارتقا یابد؟');">

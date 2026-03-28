@@ -1,6 +1,7 @@
 INSERT INTO users (
     full_name,
     username,
+    email,
     password_hash,
     role,
     permissions,
@@ -11,6 +12,7 @@ INSERT INTO users (
 ) VALUES (
     'Super Admin',
     'superadmin',
+    'superadmin@darololom.local',
     '$2y$10$J02cYpH9YyhxMD0KX892ouLMpanb0ORI5xqme9jQXe5wZQi6V9ocO',
     'super_admin',
     '["access_students","register_students","manage_students","access_teachers","register_teachers","manage_teachers","manage_classes","manage_subjects","manage_grades","manage_contracts","manage_users"]',
@@ -21,6 +23,7 @@ INSERT INTO users (
 )
 ON DUPLICATE KEY UPDATE
     full_name = VALUES(full_name),
+    email = VALUES(email),
     password_hash = VALUES(password_hash),
     role = 'super_admin',
     permissions = VALUES(permissions),

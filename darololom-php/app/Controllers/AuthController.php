@@ -24,21 +24,21 @@ final class AuthController extends Controller
     {
         $this->csrfCheck();
 
-        $username = trim((string) ($_POST['username'] ?? ''));
+        $identity = trim((string) ($_POST['identity'] ?? ''));
         $password = (string) ($_POST['password'] ?? '');
 
-        if ($username === '' || $password === '') {
-            with_old(['username' => $username]);
-            flash('error', 'نام کاربری و رمز عبور الزامی است.');
+        if ($identity === '' || $password === '') {
+            with_old(['identity' => $identity]);
+            flash('error', 'ایمیل/نام کاربری و رمز عبور الزامی است.');
             $this->redirect('/login');
         }
 
         $db = Database::connection();
-        $stmt = $db->prepare('SELECT id, full_name, username, password_hash, role, permissions, can_register_students, can_register_teachers, is_active
+        $stmt = $db->prepare('SELECT id, full_name, username, email, password_hash, role, permissions, can_register_students, can_register_teachers, student_id, teacher_id, is_active
             FROM users
-            WHERE username = :username
+            WHERE username = ? OR email = ?
             LIMIT 1');
-        $stmt->execute(['username' => $username]);
+        $stmt->execute([$identity, $identity]);
         $user = $stmt->fetch();
 
         if (
@@ -46,8 +46,8 @@ final class AuthController extends Controller
             (int) ($user['is_active'] ?? 0) !== 1 ||
             !password_verify($password, (string) ($user['password_hash'] ?? ''))
         ) {
-            with_old(['username' => $username]);
-            flash('error', 'نام کاربری یا رمز عبور نادرست است.');
+            with_old(['identity' => $identity]);
+            flash('error', 'ایمیل/نام کاربری یا رمز عبور نادرست است.');
             $this->redirect('/login');
         }
 

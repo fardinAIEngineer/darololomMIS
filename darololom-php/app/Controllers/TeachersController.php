@@ -114,6 +114,7 @@ final class TeachersController extends Controller
         $this->render('teachers/form', [
             'title' => 'ثبت استاد',
             'teacher' => null,
+            'linkedUser' => null,
             ...$this->references(),
             'selectedClassIds' => [],
             'selectedSubjectIds' => [],
@@ -130,7 +131,7 @@ final class TeachersController extends Controller
         $this->csrfCheck();
         $db = Database::connection();
 
-        $validation = $this->validateTeacherInput(null, null);
+        $validation = $this->validateTeacherInput(null, null, null);
         if (!$validation['valid']) {
             with_old($_POST);
             flash('error', $validation['error']);
@@ -181,6 +182,12 @@ final class TeachersController extends Controller
         $this->syncMany($teacherId, 'teacher_level', 'level_id', $validation['level_ids']);
         $this->syncMany($teacherId, 'teacher_semester', 'semester_id', $validation['semester_ids']);
         $this->syncMany($teacherId, 'teacher_period', 'period_id', $validation['period_ids']);
+        $this->upsertTeacherAccount(
+            $teacherId,
+            trim((string) ($_POST['name'] ?? '')),
+            (string) $validation['account_email'],
+            $validation['account_password_hash']
+        );
 
         clear_old();
         flash('success', 'استاد با موفقیت ثبت شد.');
@@ -202,9 +209,12 @@ final class TeachersController extends Controller
             $this->redirect('/teachers');
         }
 
+        $linkedUser = $this->linkedAccount($id);
+
         $this->render('teachers/form', [
             'title' => 'ویرایش استاد',
             'teacher' => $teacher,
+            'linkedUser' => $linkedUser,
             ...$this->references(),
             'selectedClassIds' => $this->selectedIds('teacher_class', 'class_id', $id),
             'selectedSubjectIds' => $this->selectedIds('teacher_subject', 'subject_id', $id),
@@ -231,7 +241,8 @@ final class TeachersController extends Controller
             $this->redirect('/teachers');
         }
 
-        $validation = $this->validateTeacherInput($teacher, $id);
+        $linkedUser = $this->linkedAccount($id);
+        $validation = $this->validateTeacherInput($teacher, $id, $linkedUser);
         if (!$validation['valid']) {
             with_old($_POST);
             flash('error', $validation['error']);
@@ -292,6 +303,12 @@ final class TeachersController extends Controller
         $this->syncMany($id, 'teacher_level', 'level_id', $validation['level_ids']);
         $this->syncMany($id, 'teacher_semester', 'semester_id', $validation['semester_ids']);
         $this->syncMany($id, 'teacher_period', 'period_id', $validation['period_ids']);
+        $this->upsertTeacherAccount(
+            $id,
+            trim((string) ($_POST['name'] ?? '')),
+            (string) $validation['account_email'],
+            $validation['account_password_hash']
+        );
 
         clear_old();
         flash('success', 'اطلاعات استاد بروزرسانی شد.');
@@ -305,6 +322,11 @@ final class TeachersController extends Controller
         $id = $this->intParam($params, 'id');
 
         $db = Database::connection();
+        $db->prepare('DELETE FROM users WHERE role = :role AND teacher_id = :teacher_id')
+            ->execute([
+                'role' => 'teacher',
+                'teacher_id' => $id,
+            ]);
         $db->prepare('DELETE FROM teachers WHERE id = :id')->execute(['id' => $id]);
 
         flash('success', 'استاد حذف شد.');
@@ -377,6 +399,8 @@ final class TeachersController extends Controller
             'title' => 'تقدیرنامه استاد',
             'teacher' => $teacher,
             'meritCount' => $meritCount,
+            'jalaliDate' => $this->todayJalaliDate(),
+            'use_layout' => false,
         ]);
     }
 
@@ -390,6 +414,98 @@ final class TeachersController extends Controller
             'semesters' => $db->query('SELECT * FROM semesters WHERE number BETWEEN 1 AND 4 ORDER BY number')->fetchAll(),
             'periods' => $db->query('SELECT * FROM course_periods ORDER BY number')->fetchAll(),
         ];
+    }
+
+    private function linkedAccount(int $teacherId): ?array
+    {
+        $stmt = Database::connection()->prepare(
+            'SELECT id, email
+             FROM users
+             WHERE role = :role AND teacher_id = :teacher_id
+             LIMIT 1'
+        );
+        $stmt->execute([
+            'role' => 'teacher',
+            'teacher_id' => $teacherId,
+        ]);
+        $user = $stmt->fetch();
+        return $user ?: null;
+    }
+
+    private function upsertTeacherAccount(int $teacherId, string $fullName, string $email, ?string $passwordHash): void
+    {
+        $db = Database::connection();
+        $linked = $this->linkedAccount($teacherId);
+
+        if ($linked) {
+            $fields = [
+                'full_name = :full_name',
+                'email = :email',
+                'is_active = 1',
+            ];
+            $params = [
+                'id' => (int) $linked['id'],
+                'full_name' => $fullName,
+                'email' => $email,
+            ];
+
+            if ($passwordHash !== null) {
+                $fields[] = 'password_hash = :password_hash';
+                $params['password_hash'] = $passwordHash;
+            }
+
+            $update = $db->prepare('UPDATE users SET ' . implode(', ', $fields) . ' WHERE id = :id');
+            $update->execute($params);
+            return;
+        }
+
+        $username = $this->generateUniqueUsername('teacher_' . $teacherId);
+        $insert = $db->prepare(
+            'INSERT INTO users
+            (full_name, username, email, password_hash, role, permissions, can_register_students, can_register_teachers, teacher_id, created_by, is_active, created_at)
+            VALUES
+            (:full_name, :username, :email, :password_hash, :role, :permissions, 0, 0, :teacher_id, :created_by, 1, NOW())'
+        );
+
+        $insert->execute([
+            'full_name' => $fullName,
+            'username' => $username,
+            'email' => $email,
+            'password_hash' => $passwordHash ?? password_hash(bin2hex(random_bytes(8)), PASSWORD_DEFAULT),
+            'role' => 'teacher',
+            'permissions' => json_encode([], JSON_UNESCAPED_UNICODE),
+            'teacher_id' => $teacherId,
+            'created_by' => auth_id() ?: null,
+        ]);
+    }
+
+    private function generateUniqueUsername(string $base): string
+    {
+        $base = strtolower(trim($base));
+        $base = preg_replace('/[^a-z0-9_.-]/', '', $base) ?? '';
+        if ($base === '') {
+            $base = 'user';
+        }
+        if (mb_strlen($base) < 4) {
+            $base .= '_acct';
+        }
+
+        $base = substr($base, 0, 40);
+        $username = $base;
+        $db = Database::connection();
+
+        for ($i = 0; $i < 100; $i++) {
+            $stmt = $db->prepare('SELECT id FROM users WHERE username = :username LIMIT 1');
+            $stmt->execute(['username' => $username]);
+            if (!$stmt->fetch()) {
+                return $username;
+            }
+
+            $suffix = '_' . ($i + 1);
+            $username = substr($base, 0, 50 - strlen($suffix)) . $suffix;
+        }
+
+        return substr($base, 0, 35) . '_' . bin2hex(random_bytes(6));
     }
 
     private function payload(?string $imagePath, ?string $planFile, ?string $eduDoc, ?string $expDoc): array
@@ -468,9 +584,19 @@ final class TeachersController extends Controller
     }
 
     /**
-     * @return array{valid:bool,error:string,class_ids:array<int>,subject_ids:array<int>,level_ids:array<int>,semester_ids:array<int>,period_ids:array<int>}
+     * @return array{
+     *     valid:bool,
+     *     error:string,
+     *     class_ids:array<int>,
+     *     subject_ids:array<int>,
+     *     level_ids:array<int>,
+     *     semester_ids:array<int>,
+     *     period_ids:array<int>,
+     *     account_email?:string,
+     *     account_password_hash?:?string
+     * }
      */
-    private function validateTeacherInput(?array $existingTeacher, ?int $teacherId): array
+    private function validateTeacherInput(?array $existingTeacher, ?int $teacherId, ?array $linkedUser): array
     {
         $name = trim((string) ($_POST['name'] ?? ''));
         $fatherName = trim((string) ($_POST['father_name'] ?? ''));
@@ -483,6 +609,10 @@ final class TeachersController extends Controller
         $gender = (string) ($_POST['gender'] ?? '');
         $educationLevel = (string) ($_POST['education_level'] ?? '');
         $idNumber = trim((string) ($_POST['id_number'] ?? ''));
+        $accountEmail = mb_strtolower(trim((string) ($_POST['account_email'] ?? '')));
+        $accountPassword = (string) ($_POST['account_password'] ?? '');
+        $accountPasswordConfirmation = (string) ($_POST['account_password_confirmation'] ?? '');
+        $linkedUserId = (int) ($linkedUser['id'] ?? 0);
 
         if ($name === '' || mb_strlen($name) < 3 || mb_strlen($name) > 255) {
             return $this->validationError('نام و تخلص استاد الزامی است (حداقل ۳ حرف).');
@@ -516,6 +646,53 @@ final class TeachersController extends Controller
         }
         if ($area === '' || mb_strlen($area) > 150) {
             return $this->validationError('ناحیه را به شکل درست وارد کنید.');
+        }
+
+        if ($accountEmail === '' || !filter_var($accountEmail, FILTER_VALIDATE_EMAIL) || mb_strlen($accountEmail) > 190) {
+            return $this->validationError('ایمیل حساب استاد معتبر نیست.');
+        }
+
+        $db = Database::connection();
+        if ($linkedUserId > 0) {
+            $emailStmt = $db->prepare(
+                'SELECT id
+                 FROM users
+                 WHERE email = :email
+                 AND id <> :exclude_id
+                 LIMIT 1'
+            );
+            $emailStmt->execute([
+                'email' => $accountEmail,
+                'exclude_id' => $linkedUserId,
+            ]);
+        } else {
+            $emailStmt = $db->prepare(
+                'SELECT id
+                 FROM users
+                 WHERE email = :email
+                 LIMIT 1'
+            );
+            $emailStmt->execute([
+                'email' => $accountEmail,
+            ]);
+        }
+        if ($emailStmt->fetch()) {
+            return $this->validationError('ایمیل حساب استاد تکراری است.');
+        }
+
+        if ($accountPassword === '' && $accountPasswordConfirmation !== '') {
+            return $this->validationError('برای تکرار رمز، ابتدا رمز عبور جدید استاد را وارد کنید.');
+        }
+        if ($linkedUserId === 0 && $accountPassword === '') {
+            return $this->validationError('برای ایجاد حساب استاد، رمز عبور الزامی است.');
+        }
+        if ($accountPassword !== '') {
+            if (mb_strlen($accountPassword) < 8) {
+                return $this->validationError('رمز عبور حساب استاد باید حداقل ۸ کاراکتر باشد.');
+            }
+            if ($accountPassword !== $accountPasswordConfirmation) {
+                return $this->validationError('تکرار رمز عبور حساب استاد یکسان نیست.');
+            }
         }
 
         $imageValidation = $this->validateUploadedFile('image', ['jpg', 'jpeg', 'png', 'webp'], 2 * 1024 * 1024, false, 'عکس');
@@ -567,7 +744,6 @@ final class TeachersController extends Controller
             return $this->validationError('دوره‌های انتخاب‌شده معتبر نیستند.');
         }
 
-        $db = Database::connection();
         $levelCodes = $this->levelCodesByIds($levelIds);
 
         if (in_array('aali', $levelCodes, true) && count($semesterIds) < 1) {
@@ -604,6 +780,8 @@ final class TeachersController extends Controller
             'level_ids' => $levelIds,
             'semester_ids' => in_array('aali', $levelCodes, true) ? $semesterIds : [],
             'period_ids' => $requiresPeriod ? $periodIds : [],
+            'account_email' => $accountEmail,
+            'account_password_hash' => $accountPassword !== '' ? password_hash($accountPassword, PASSWORD_DEFAULT) : null,
         ];
     }
 
@@ -712,5 +890,52 @@ final class TeachersController extends Controller
             'semester_ids' => [],
             'period_ids' => [],
         ];
+    }
+
+    private function todayJalaliDate(): string
+    {
+        [$jy, $jm, $jd] = $this->gregorianToJalali((int) date('Y'), (int) date('m'), (int) date('d'));
+        return sprintf('%04d-%02d-%02d', $jy, $jm, $jd);
+    }
+
+    private function gregorianToJalali(int $gy, int $gm, int $gd): array
+    {
+        $gdm = [0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334];
+        if ($gy > 1600) {
+            $jy = 979;
+            $gy -= 1600;
+        } else {
+            $jy = 0;
+            $gy -= 621;
+        }
+
+        $gy2 = ($gm > 2) ? ($gy + 1) : $gy;
+        $days = (365 * $gy)
+            + intdiv($gy2 + 3, 4)
+            - intdiv($gy2 + 99, 100)
+            + intdiv($gy2 + 399, 400)
+            - 80
+            + $gd
+            + $gdm[$gm - 1];
+
+        $jy += 33 * intdiv($days, 12053);
+        $days %= 12053;
+        $jy += 4 * intdiv($days, 1461);
+        $days %= 1461;
+
+        if ($days > 365) {
+            $jy += intdiv($days - 1, 365);
+            $days = ($days - 1) % 365;
+        }
+
+        if ($days < 186) {
+            $jm = 1 + intdiv($days, 31);
+            $jd = 1 + ($days % 31);
+        } else {
+            $jm = 7 + intdiv($days - 186, 30);
+            $jd = 1 + (($days - 186) % 30);
+        }
+
+        return [$jy, $jm, $jd];
     }
 }

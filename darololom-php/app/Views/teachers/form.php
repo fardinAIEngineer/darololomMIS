@@ -1,4 +1,5 @@
 <?php
+$linkedUser = $linkedUser ?? null;
 $oldOr = static fn(string $key, mixed $fallback = ''): mixed => old($key, $teacher[$key] ?? $fallback);
 
 $selectedClassIdsInput = old('class_ids', $selectedClassIds ?? []);
@@ -30,6 +31,8 @@ if (!is_array($selectedPeriodIdsInput)) {
     $selectedPeriodIdsInput = [];
 }
 $selectedPeriodIds = array_map('intval', $selectedPeriodIdsInput);
+$accountEmail = (string) old('account_email', (string) ($linkedUser['email'] ?? ''));
+$mustSetPassword = empty($linkedUser['id']);
 ?>
 
 <div class="section-title">
@@ -42,7 +45,7 @@ $selectedPeriodIds = array_map('intval', $selectedPeriodIdsInput);
             <button type="button" class="wizard-step is-active" data-step-target="1">۱) اطلاعات فردی</button>
             <button type="button" class="wizard-step" data-step-target="2">۲) آدرس</button>
             <button type="button" class="wizard-step" data-step-target="3">۳) اسناد</button>
-            <button type="button" class="wizard-step" data-step-target="4">۴) تدریس</button>
+            <button type="button" class="wizard-step" data-step-target="4">۴) تدریس و حساب</button>
         </div>
 
         <form id="teacherWizardForm" method="post" action="<?= e($formAction) ?>" enctype="multipart/form-data" class="module-form teacher-form-grid" novalidate>
@@ -212,6 +215,24 @@ $selectedPeriodIds = array_map('intval', $selectedPeriodIdsInput);
                     </div>
                     <small class="field-help">برای ابتداییه/متوسطه حداقل یک دوره ضروری است.</small>
                 </div>
+
+                <div class="form-group">
+                    <label>ایمیل حساب استاد</label>
+                    <input class="form-control" type="email" name="account_email" id="teacher_account_email" value="<?= e($accountEmail) ?>" placeholder="مثال: teacher@example.com" required>
+                    <small class="field-help">استاد با همین ایمیل وارد حساب خود می‌شود.</small>
+                </div>
+
+                <div class="form-group">
+                    <label>رمز عبور حساب استاد</label>
+                    <input class="form-control" type="password" name="account_password" id="teacher_account_password" placeholder="<?= $mustSetPassword ? 'حداقل ۸ کاراکتر (الزامی)' : 'اگر تغییر نمی‌دهید خالی بگذارید' ?>" minlength="8" <?= $mustSetPassword ? 'required' : '' ?>>
+                    <small class="field-help"><?= $mustSetPassword ? 'برای ایجاد حساب استاد، رمز عبور الزامی است.' : 'در ویرایش، فقط در صورت نیاز رمز جدید وارد کنید.' ?></small>
+                </div>
+
+                <div class="form-group">
+                    <label>تکرار رمز عبور</label>
+                    <input class="form-control" type="password" name="account_password_confirmation" id="teacher_account_password_confirmation" placeholder="تکرار رمز عبور" minlength="8" <?= $mustSetPassword ? 'required' : '' ?>>
+                    <small class="field-help">باید دقیقاً با رمز عبور یکسان باشد.</small>
+                </div>
             </section>
 
             <div class="full wizard-actions">
@@ -234,6 +255,10 @@ $selectedPeriodIds = array_map('intval', $selectedPeriodIdsInput);
     const prevBtn = document.getElementById('teacherPrevStepBtn');
     const nextBtn = document.getElementById('teacherNextStepBtn');
     const submitBtn = document.getElementById('teacherSubmitBtn');
+    const accountEmail = document.getElementById('teacher_account_email');
+    const accountPassword = document.getElementById('teacher_account_password');
+    const accountPasswordConfirm = document.getElementById('teacher_account_password_confirmation');
+    const mustSetPassword = <?= $mustSetPassword ? 'true' : 'false' ?>;
 
     let currentStep = 0;
 
@@ -322,6 +347,35 @@ $selectedPeriodIds = array_map('intval', $selectedPeriodIdsInput);
                 alert('سطح صنف‌های انتخابی باید داخل سطوح تدریس باشد.');
                 return false;
             }
+        }
+
+        if (!accountEmail || !accountEmail.value.trim() || !accountEmail.checkValidity()) {
+            alert('ایمیل حساب استاد معتبر نیست.');
+            if (accountEmail) accountEmail.focus();
+            return false;
+        }
+
+        if (mustSetPassword && (!accountPassword || accountPassword.value.trim() === '')) {
+            alert('برای ایجاد حساب استاد، رمز عبور الزامی است.');
+            if (accountPassword) accountPassword.focus();
+            return false;
+        }
+
+        if (accountPassword && accountPassword.value !== '') {
+            if (accountPassword.value.length < 8) {
+                alert('رمز عبور حساب استاد باید حداقل ۸ کاراکتر باشد.');
+                accountPassword.focus();
+                return false;
+            }
+            if (!accountPasswordConfirm || accountPassword.value !== accountPasswordConfirm.value) {
+                alert('تکرار رمز عبور حساب استاد یکسان نیست.');
+                if (accountPasswordConfirm) accountPasswordConfirm.focus();
+                return false;
+            }
+        } else if (accountPasswordConfirm && accountPasswordConfirm.value !== '') {
+            alert('برای تکرار رمز، ابتدا رمز عبور جدید استاد را وارد کنید.');
+            if (accountPassword) accountPassword.focus();
+            return false;
         }
 
         return true;

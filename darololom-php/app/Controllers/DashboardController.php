@@ -11,6 +11,11 @@ final class DashboardController extends Controller
 {
     public function index(array $params = []): void
     {
+        $this->requireAuth();
+        if (is_teacher_user() || is_student_user()) {
+            $this->redirect('/account');
+        }
+
         $db = Database::connection();
 
         $cards = [

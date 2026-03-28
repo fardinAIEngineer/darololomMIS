@@ -3,6 +3,9 @@ declare(strict_types=1);
 
 $currentUser = auth_user();
 $isLoggedIn = $currentUser !== null;
+$currentRole = (string) ($currentUser['role'] ?? '');
+$isStudentRole = $currentRole === 'student';
+$isTeacherRole = $currentRole === 'teacher';
 ?>
 <!doctype html>
 <html lang="fa" dir="rtl">
@@ -35,13 +38,17 @@ $isLoggedIn = $currentUser !== null;
     <header class="site-header">
         <div class="container">
             <div class="row">
-                <div class="col-md-4 col-sm-5 site-header-intro">
-                    <p>سیستم مدیریت اطلاعات دارالعلوم عالی الحاج سید منصور نادری</p>
-                </div>
                 <div class="col-md-8 col-sm-7 site-header-meta">
                     <span class="phone-icon"><i class="fa fa-phone"></i> شماره تماس: 0700-000000</span>
-                    <span class="date-icon"><i class="fa fa-calendar-plus-o"></i> روزهای کاری: شنبه تا پنج‌شنبه</span>
                     <span class="email-icon"><i class="fa fa-envelope-o"></i> ایمیل: <a href="mailto:info@darololom.local">info@darololom.local</a></span>
+                </div>
+                <div class="col-md-4 col-sm-5 site-header-intro">
+                    <div class="site-header-brand">
+                        <span class="site-header-logo-wrap">
+                            <img src="<?= e(url('/assets/images/logo.jpg')) ?>" alt="لوگوی دارالعلوم" class="site-header-logo" onerror="this.style.display='none';">
+                        </span>
+                        <p>سیستم مدیریت دارالعلوم عالی الحاج سید منصور نادری</p>
+                    </div>
                 </div>
             </div>
         </div>
@@ -55,29 +62,39 @@ $isLoggedIn = $currentUser !== null;
                     <span class="icon icon-bar"></span>
                     <span class="icon icon-bar"></span>
                 </button>
-                <a href="<?= e(url('/')) ?>" class="navbar-brand"><i class="fa fa-h-square"></i>DarolOlom MIS</a>
+                <a href="<?= e(url('/')) ?>" class="navbar-brand">
+                    <img src="<?= e(url('/assets/images/logo.jpg')) ?>" alt="لوگو" class="navbar-brand-logo" onerror="this.style.display='none';">
+                    DarolOlom MIS
+                </a>
             </div>
             <div class="collapse navbar-collapse">
                 <ul class="nav navbar-nav navbar-right">
                     <?php if ($isLoggedIn): ?>
-                        <li><a href="<?= e(url('/')) ?>">داشبورد</a></li>
-                        <?php if (can('access_students')): ?>
-                            <li><a href="<?= e(url('/students')) ?>">دانش‌آموزان</a></li>
-                        <?php endif; ?>
-                        <?php if (can('access_teachers')): ?>
-                            <li><a href="<?= e(url('/teachers')) ?>">اساتید</a></li>
-                        <?php endif; ?>
-                        <?php if (can('manage_classes')): ?>
-                            <li><a href="<?= e(url('/classes')) ?>">صنوف</a></li>
-                        <?php endif; ?>
-                        <?php if (can('manage_subjects')): ?>
-                            <li><a href="<?= e(url('/subjects')) ?>">مضامین</a></li>
-                        <?php endif; ?>
-                        <?php if (can('manage_grades')): ?>
-                            <li><a href="<?= e(url('/grades')) ?>">نمرات</a></li>
-                        <?php endif; ?>
-                        <?php if (can('manage_users')): ?>
-                            <li><a href="<?= e(url('/users')) ?>">مدیریت کاربران</a></li>
+                        <?php if ($isStudentRole): ?>
+                            <li><a href="<?= e(url('/account')) ?>">حساب من</a></li>
+                        <?php elseif ($isTeacherRole): ?>
+                            <li><a href="<?= e(url('/account')) ?>">حساب من</a></li>
+                            <li><a href="<?= e(url('/grades')) ?>">نمرات صنوف من</a></li>
+                        <?php else: ?>
+                            <li><a href="<?= e(url('/')) ?>">داشبورد</a></li>
+                            <?php if (can('access_students')): ?>
+                                <li><a href="<?= e(url('/students')) ?>">دانش‌آموزان</a></li>
+                            <?php endif; ?>
+                            <?php if (can('access_teachers')): ?>
+                                <li><a href="<?= e(url('/teachers')) ?>">اساتید</a></li>
+                            <?php endif; ?>
+                            <?php if (can('manage_classes')): ?>
+                                <li><a href="<?= e(url('/classes')) ?>">صنوف</a></li>
+                            <?php endif; ?>
+                            <?php if (can('manage_subjects')): ?>
+                                <li><a href="<?= e(url('/subjects')) ?>">مضامین</a></li>
+                            <?php endif; ?>
+                            <?php if (can('manage_grades')): ?>
+                                <li><a href="<?= e(url('/grades')) ?>">نمرات</a></li>
+                            <?php endif; ?>
+                            <?php if (can('manage_users')): ?>
+                                <li><a href="<?= e(url('/users')) ?>">مدیریت کاربران</a></li>
+                            <?php endif; ?>
                         <?php endif; ?>
                         <li class="nav-user-label"><span><i class="fa fa-user"></i><?= e((string) ($currentUser['full_name'] ?? $currentUser['username'] ?? 'کاربر')) ?></span></li>
                         <li>
@@ -111,17 +128,24 @@ $isLoggedIn = $currentUser !== null;
             <div class="row">
                 <div class="col-md-8 col-sm-6">
                     <div class="footer-thumb">
-                        <h4 class="wow fadeInUp" data-wow-delay="0.4s">سیستم مدیریت معلومات دارالعلوم</h4>
-                        <p>این سامانه برای مدیریت یک‌پارچه دانش‌آموزان، استادان، صنوف، مضامین، نمرات، قراردادها و گزارش‌های آموزشی دارالعلوم طراحی شده است.</p>
+                        <h4 class="wow fadeInUp" data-wow-delay="0.4s">سیستم مدیریت دارالعلوم  عالی الحاج سید منصور نادری</h4>
+                        <p>این سیستم برای مدیریت یک‌پارچه دانش‌آموزان، استادان، صنوف، مضامین، نمرات، قراردادها و گزارش‌های آموزشی دارالعلوم طراحی شده است.</p>
                     </div>
                 </div>
                 <div class="col-md-4 col-sm-6">
                     <div class="footer-thumb">
                         <h4 class="wow fadeInUp" data-wow-delay="0.4s">دسترسی سریع</h4>
                         <ul class="footer-links">
-                            <li><a href="<?= e(url('/students')) ?>">مدیریت دانش‌آموزان</a></li>
-                            <li><a href="<?= e(url('/teachers')) ?>">مدیریت استادان</a></li>
-                            <li><a href="<?= e(url('/grades')) ?>">ثبت و مدیریت نمرات</a></li>
+                            <?php if ($isStudentRole): ?>
+                                <li><a href="<?= e(url('/account')) ?>">مشاهده مشخصات من</a></li>
+                            <?php elseif ($isTeacherRole): ?>
+                                <li><a href="<?= e(url('/account')) ?>">مشاهده مشخصات من</a></li>
+                                <li><a href="<?= e(url('/grades')) ?>">ثبت نمرات صنوف من</a></li>
+                            <?php else: ?>
+                                <li><a href="<?= e(url('/students')) ?>">مدیریت دانش‌آموزان</a></li>
+                                <li><a href="<?= e(url('/teachers')) ?>">مدیریت استادان</a></li>
+                                <li><a href="<?= e(url('/grades')) ?>">ثبت و مدیریت نمرات</a></li>
+                            <?php endif; ?>
                         </ul>
                         <p class="footer-copy">© <?= date('Y') ?> دارالعلوم عالی الحاج سید منصور نادری - همه حقوق محفوظ است.</p>
                     </div>

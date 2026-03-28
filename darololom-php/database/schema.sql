@@ -11,15 +11,21 @@ CREATE TABLE IF NOT EXISTS users (
     id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     full_name VARCHAR(255) NOT NULL,
     username VARCHAR(100) NOT NULL UNIQUE,
+    email VARCHAR(190) NULL,
     password_hash VARCHAR(255) NOT NULL,
-    role ENUM('super_admin', 'admin') NOT NULL DEFAULT 'admin',
+    role ENUM('super_admin', 'admin', 'teacher', 'student') NOT NULL DEFAULT 'admin',
     permissions JSON NULL,
     can_register_students TINYINT(1) NOT NULL DEFAULT 0,
     can_register_teachers TINYINT(1) NOT NULL DEFAULT 0,
+    student_id INT UNSIGNED NULL,
+    teacher_id INT UNSIGNED NULL,
     created_by INT UNSIGNED NULL,
     is_active TINYINT(1) NOT NULL DEFAULT 1,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    UNIQUE KEY uniq_users_email (email),
+    UNIQUE KEY uniq_users_student (student_id),
+    UNIQUE KEY uniq_users_teacher (teacher_id),
     CONSTRAINT fk_users_created_by FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL
 ) ENGINE=InnoDB;
 
@@ -38,6 +44,105 @@ SET @alter_users_permissions_sql := IF(
 PREPARE alter_users_permissions_stmt FROM @alter_users_permissions_sql;
 EXECUTE alter_users_permissions_stmt;
 DEALLOCATE PREPARE alter_users_permissions_stmt;
+
+SET @has_email_col := (
+    SELECT COUNT(*)
+    FROM information_schema.columns
+    WHERE table_schema = DATABASE()
+      AND table_name = 'users'
+      AND column_name = 'email'
+);
+SET @alter_users_email_sql := IF(
+    @has_email_col = 0,
+    'ALTER TABLE users ADD COLUMN email VARCHAR(190) NULL AFTER username',
+    'SELECT 1'
+);
+PREPARE alter_users_email_stmt FROM @alter_users_email_sql;
+EXECUTE alter_users_email_stmt;
+DEALLOCATE PREPARE alter_users_email_stmt;
+
+SET @has_student_id_col := (
+    SELECT COUNT(*)
+    FROM information_schema.columns
+    WHERE table_schema = DATABASE()
+      AND table_name = 'users'
+      AND column_name = 'student_id'
+);
+SET @alter_users_student_id_sql := IF(
+    @has_student_id_col = 0,
+    'ALTER TABLE users ADD COLUMN student_id INT UNSIGNED NULL AFTER can_register_teachers',
+    'SELECT 1'
+);
+PREPARE alter_users_student_id_stmt FROM @alter_users_student_id_sql;
+EXECUTE alter_users_student_id_stmt;
+DEALLOCATE PREPARE alter_users_student_id_stmt;
+
+SET @has_teacher_id_col := (
+    SELECT COUNT(*)
+    FROM information_schema.columns
+    WHERE table_schema = DATABASE()
+      AND table_name = 'users'
+      AND column_name = 'teacher_id'
+);
+SET @alter_users_teacher_id_sql := IF(
+    @has_teacher_id_col = 0,
+    'ALTER TABLE users ADD COLUMN teacher_id INT UNSIGNED NULL AFTER student_id',
+    'SELECT 1'
+);
+PREPARE alter_users_teacher_id_stmt FROM @alter_users_teacher_id_sql;
+EXECUTE alter_users_teacher_id_stmt;
+DEALLOCATE PREPARE alter_users_teacher_id_stmt;
+
+ALTER TABLE users
+    MODIFY COLUMN role ENUM('super_admin', 'admin', 'teacher', 'student') NOT NULL DEFAULT 'admin';
+
+SET @has_users_email_index := (
+    SELECT COUNT(*)
+    FROM information_schema.statistics
+    WHERE table_schema = DATABASE()
+      AND table_name = 'users'
+      AND index_name = 'uniq_users_email'
+);
+SET @create_users_email_index_sql := IF(
+    @has_users_email_index = 0,
+    'ALTER TABLE users ADD UNIQUE KEY uniq_users_email (email)',
+    'SELECT 1'
+);
+PREPARE create_users_email_index_stmt FROM @create_users_email_index_sql;
+EXECUTE create_users_email_index_stmt;
+DEALLOCATE PREPARE create_users_email_index_stmt;
+
+SET @has_users_student_index := (
+    SELECT COUNT(*)
+    FROM information_schema.statistics
+    WHERE table_schema = DATABASE()
+      AND table_name = 'users'
+      AND index_name = 'uniq_users_student'
+);
+SET @create_users_student_index_sql := IF(
+    @has_users_student_index = 0,
+    'ALTER TABLE users ADD UNIQUE KEY uniq_users_student (student_id)',
+    'SELECT 1'
+);
+PREPARE create_users_student_index_stmt FROM @create_users_student_index_sql;
+EXECUTE create_users_student_index_stmt;
+DEALLOCATE PREPARE create_users_student_index_stmt;
+
+SET @has_users_teacher_index := (
+    SELECT COUNT(*)
+    FROM information_schema.statistics
+    WHERE table_schema = DATABASE()
+      AND table_name = 'users'
+      AND index_name = 'uniq_users_teacher'
+);
+SET @create_users_teacher_index_sql := IF(
+    @has_users_teacher_index = 0,
+    'ALTER TABLE users ADD UNIQUE KEY uniq_users_teacher (teacher_id)',
+    'SELECT 1'
+);
+PREPARE create_users_teacher_index_stmt FROM @create_users_teacher_index_sql;
+EXECUTE create_users_teacher_index_stmt;
+DEALLOCATE PREPARE create_users_teacher_index_stmt;
 
 CREATE TABLE IF NOT EXISTS semesters (
     id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
@@ -175,6 +280,38 @@ CREATE TABLE IF NOT EXISTS students (
     CONSTRAINT fk_students_level FOREIGN KEY (level_id) REFERENCES study_levels(id) ON DELETE SET NULL
 ) ENGINE=InnoDB;
 
+SET @has_fk_users_student := (
+    SELECT COUNT(*)
+    FROM information_schema.table_constraints
+    WHERE table_schema = DATABASE()
+      AND table_name = 'users'
+      AND constraint_name = 'fk_users_student'
+);
+SET @add_fk_users_student_sql := IF(
+    @has_fk_users_student = 0,
+    'ALTER TABLE users ADD CONSTRAINT fk_users_student FOREIGN KEY (student_id) REFERENCES students(id) ON DELETE SET NULL',
+    'SELECT 1'
+);
+PREPARE add_fk_users_student_stmt FROM @add_fk_users_student_sql;
+EXECUTE add_fk_users_student_stmt;
+DEALLOCATE PREPARE add_fk_users_student_stmt;
+
+SET @has_fk_users_teacher := (
+    SELECT COUNT(*)
+    FROM information_schema.table_constraints
+    WHERE table_schema = DATABASE()
+      AND table_name = 'users'
+      AND constraint_name = 'fk_users_teacher'
+);
+SET @add_fk_users_teacher_sql := IF(
+    @has_fk_users_teacher = 0,
+    'ALTER TABLE users ADD CONSTRAINT fk_users_teacher FOREIGN KEY (teacher_id) REFERENCES teachers(id) ON DELETE SET NULL',
+    'SELECT 1'
+);
+PREPARE add_fk_users_teacher_stmt FROM @add_fk_users_teacher_sql;
+EXECUTE add_fk_users_teacher_stmt;
+DEALLOCATE PREPARE add_fk_users_teacher_stmt;
+
 CREATE TABLE IF NOT EXISTS student_semester (
     student_id INT UNSIGNED NOT NULL,
     semester_id INT UNSIGNED NOT NULL,
@@ -195,13 +332,47 @@ CREATE TABLE IF NOT EXISTS student_scores (
     id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     student_id INT UNSIGNED NOT NULL,
     subject_id INT UNSIGNED NOT NULL,
+    recorded_by_teacher_id INT UNSIGNED NULL,
     score TINYINT UNSIGNED NULL,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     UNIQUE KEY uniq_student_subject (student_id, subject_id),
     CONSTRAINT fk_student_scores_student FOREIGN KEY (student_id) REFERENCES students(id) ON DELETE CASCADE,
-    CONSTRAINT fk_student_scores_subject FOREIGN KEY (subject_id) REFERENCES subjects(id) ON DELETE CASCADE
+    CONSTRAINT fk_student_scores_subject FOREIGN KEY (subject_id) REFERENCES subjects(id) ON DELETE CASCADE,
+    CONSTRAINT fk_student_scores_recorded_by_teacher FOREIGN KEY (recorded_by_teacher_id) REFERENCES teachers(id) ON DELETE SET NULL
 ) ENGINE=InnoDB;
+
+SET @has_recorded_by_col := (
+    SELECT COUNT(*)
+    FROM information_schema.columns
+    WHERE table_schema = DATABASE()
+      AND table_name = 'student_scores'
+      AND column_name = 'recorded_by_teacher_id'
+);
+SET @add_recorded_by_col_sql := IF(
+    @has_recorded_by_col = 0,
+    'ALTER TABLE student_scores ADD COLUMN recorded_by_teacher_id INT UNSIGNED NULL AFTER subject_id',
+    'SELECT 1'
+);
+PREPARE add_recorded_by_col_stmt FROM @add_recorded_by_col_sql;
+EXECUTE add_recorded_by_col_stmt;
+DEALLOCATE PREPARE add_recorded_by_col_stmt;
+
+SET @has_fk_student_scores_recorded_by_teacher := (
+    SELECT COUNT(*)
+    FROM information_schema.table_constraints
+    WHERE table_schema = DATABASE()
+      AND table_name = 'student_scores'
+      AND constraint_name = 'fk_student_scores_recorded_by_teacher'
+);
+SET @add_fk_student_scores_recorded_by_teacher_sql := IF(
+    @has_fk_student_scores_recorded_by_teacher = 0,
+    'ALTER TABLE student_scores ADD CONSTRAINT fk_student_scores_recorded_by_teacher FOREIGN KEY (recorded_by_teacher_id) REFERENCES teachers(id) ON DELETE SET NULL',
+    'SELECT 1'
+);
+PREPARE add_fk_student_scores_recorded_by_teacher_stmt FROM @add_fk_student_scores_recorded_by_teacher_sql;
+EXECUTE add_fk_student_scores_recorded_by_teacher_stmt;
+DEALLOCATE PREPARE add_fk_student_scores_recorded_by_teacher_stmt;
 
 CREATE TABLE IF NOT EXISTS student_behaviors (
     id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,

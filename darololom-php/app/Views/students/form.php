@@ -1,4 +1,5 @@
 <?php
+$linkedUser = $linkedUser ?? null;
 $oldOr = static fn(string $key, mixed $fallback = ''): mixed => old($key, $student[$key] ?? $fallback);
 
 $selectedSemestersInput = old('semester_ids', $selectedSemesters ?? []);
@@ -14,6 +15,8 @@ if (!is_array($selectedPeriodsInput)) {
 $selectedPeriods = array_map('intval', $selectedPeriodsInput);
 
 $hasExistingCertificate = !empty($student['certificate_file']);
+$accountEmail = (string) old('account_email', (string) ($linkedUser['email'] ?? ''));
+$mustSetPassword = empty($linkedUser['id']);
 ?>
 
 <div class="section-title">
@@ -26,7 +29,7 @@ $hasExistingCertificate = !empty($student['certificate_file']);
             <button type="button" class="wizard-step is-active" data-step-target="1">۱) مشخصات فردی</button>
             <button type="button" class="wizard-step" data-step-target="2">۲) مشخصات آموزشی</button>
             <button type="button" class="wizard-step" data-step-target="3">۳) آدرس و زمان</button>
-            <button type="button" class="wizard-step" data-step-target="4">۴) فایل‌ها و ثبت</button>
+            <button type="button" class="wizard-step" data-step-target="4">۴) فایل‌ها، حساب و ثبت</button>
         </div>
 
         <form id="studentWizardForm" method="post" action="<?= e($formAction) ?>" enctype="multipart/form-data" class="module-form student-form-grid" novalidate>
@@ -204,6 +207,24 @@ $hasExistingCertificate = !empty($student['certificate_file']);
                     <?php if (!empty($student['certificate_file'])): ?><a href="<?= e(url($student['certificate_file'])) ?>" target="_blank">نمایش فایل فعلی</a><?php endif; ?>
                 </div>
 
+                <div class="form-group">
+                    <label>ایمیل حساب شاگرد</label>
+                    <input class="form-control" type="email" name="account_email" id="account_email" value="<?= e($accountEmail) ?>" placeholder="مثال: student@example.com" required>
+                    <small class="field-help">شاگرد با همین ایمیل وارد حساب خود می‌شود.</small>
+                </div>
+
+                <div class="form-group">
+                    <label>رمز عبور حساب شاگرد</label>
+                    <input class="form-control" type="password" name="account_password" id="account_password" placeholder="<?= $mustSetPassword ? 'حداقل ۸ کاراکتر (الزامی)' : 'اگر تغییر نمی‌دهید خالی بگذارید' ?>" minlength="8" <?= $mustSetPassword ? 'required' : '' ?>>
+                    <small class="field-help"><?= $mustSetPassword ? 'برای ایجاد حساب شاگرد، رمز عبور الزامی است.' : 'در ویرایش، فقط در صورت نیاز رمز جدید وارد کنید.' ?></small>
+                </div>
+
+                <div class="form-group">
+                    <label>تکرار رمز عبور</label>
+                    <input class="form-control" type="password" name="account_password_confirmation" id="account_password_confirmation" placeholder="تکرار رمز عبور" minlength="8" <?= $mustSetPassword ? 'required' : '' ?>>
+                    <small class="field-help">باید دقیقاً با رمز عبور یکسان باشد.</small>
+                </div>
+
                 <div class="form-group full">
                     <div class="summary-note">
                         قبل از ثبت نهایی، تمام اطلاعات را یک‌بار مرور کنید. در صورت خطا، سیستم پیام دقیق نمایش می‌دهد.
@@ -237,7 +258,11 @@ $hasExistingCertificate = !empty($student['certificate_file']);
     const timeEnd = document.getElementById('time_end');
     const semesterBlock = document.getElementById('semester_block');
     const periodBlock = document.getElementById('period_block');
+    const accountEmail = document.getElementById('account_email');
+    const accountPassword = document.getElementById('account_password');
+    const accountPasswordConfirm = document.getElementById('account_password_confirmation');
     const hasExistingCertificate = <?= $hasExistingCertificate ? 'true' : 'false' ?>;
+    const mustSetPassword = <?= $mustSetPassword ? 'true' : 'false' ?>;
 
     let currentStep = 0;
 
@@ -346,6 +371,40 @@ $hasExistingCertificate = !empty($student['certificate_file']);
         if (timeStart && timeEnd && timeStart.value && timeEnd.value && timeStart.value >= timeEnd.value) {
             alert('تایم ختم باید بعد از تایم آغاز باشد.');
             showStep(2);
+            return false;
+        }
+
+        if (!accountEmail || !accountEmail.value.trim() || !accountEmail.checkValidity()) {
+            alert('ایمیل حساب شاگرد معتبر نیست.');
+            showStep(3);
+            if (accountEmail) accountEmail.focus();
+            return false;
+        }
+
+        if (mustSetPassword && (!accountPassword || accountPassword.value.trim() === '')) {
+            alert('برای ایجاد حساب شاگرد، رمز عبور الزامی است.');
+            showStep(3);
+            if (accountPassword) accountPassword.focus();
+            return false;
+        }
+
+        if (accountPassword && accountPassword.value !== '') {
+            if (accountPassword.value.length < 8) {
+                alert('رمز عبور حساب شاگرد باید حداقل ۸ کاراکتر باشد.');
+                showStep(3);
+                accountPassword.focus();
+                return false;
+            }
+            if (!accountPasswordConfirm || accountPassword.value !== accountPasswordConfirm.value) {
+                alert('تکرار رمز عبور حساب شاگرد یکسان نیست.');
+                showStep(3);
+                if (accountPasswordConfirm) accountPasswordConfirm.focus();
+                return false;
+            }
+        } else if (accountPasswordConfirm && accountPasswordConfirm.value !== '') {
+            alert('برای تکرار رمز، ابتدا رمز عبور جدید را وارد کنید.');
+            showStep(3);
+            if (accountPassword) accountPassword.focus();
             return false;
         }
 

@@ -1,6 +1,4 @@
-<?php
-$oldUsername = (string) old('username', '');
-?>
+<?php $oldIdentity = (string) old('identity', ''); ?>
 
 <div class="section-title">
     <h2>ورود به سیستم</h2>
@@ -10,19 +8,19 @@ $oldUsername = (string) old('username', '');
     <div class="col-md-6 col-md-offset-3 col-sm-8 col-sm-offset-2">
         <div class="news-thumb auth-card">
             <div class="news-info">
-                <p class="auth-note">برای دسترسی به سیستم، نام کاربری و رمز عبور خود را وارد کنید.</p>
+                <p class="auth-note">برای دسترسی به سیستم، ایمیل یا نام کاربری همراه با رمز عبور خود را وارد کنید.</p>
 
                 <form method="post" action="<?= e(url('/login')) ?>" class="auth-form">
                     <?= csrf_field() ?>
 
                     <div class="form-group">
-                        <label>نام کاربری</label>
+                        <label>ایمیل یا نام کاربری</label>
                         <input
                             type="text"
-                            name="username"
+                            name="identity"
                             class="form-control"
-                            value="<?= e($oldUsername) ?>"
-                            placeholder="مثال: superadmin"
+                            value="<?= e($oldIdentity) ?>"
+                            placeholder="مثال: superadmin یا user@example.com"
                             required
                             autocomplete="username"
                         >

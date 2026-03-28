@@ -8,6 +8,8 @@ return static function (Router $router): void {
     $router->get('/login', 'AuthController@showLogin');
     $router->post('/login', 'AuthController@login');
     $router->post('/logout', 'AuthController@logout');
+    $router->get('/account', 'AccountController@index');
+    $router->post('/account/security', 'AccountController@updateSecurity');
 
     $router->get('/', 'DashboardController@index');
 
@@ -26,6 +28,7 @@ return static function (Router $router): void {
     $router->get('/students/{id}/results', 'StudentsController@results');
     $router->get('/students/{id}/certificate', 'StudentsController@certificate');
     $router->get('/students/{id}/appreciation', 'StudentsController@appreciation');
+    $router->get('/students/{id}/id-card', 'StudentsController@idCard');
     $router->post('/students/{id}/promote/moteseta', 'StudentsController@promoteToMoteseta');
 
     $router->get('/teachers', 'TeachersController@index');

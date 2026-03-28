@@ -1,12 +1,43 @@
 <div class="section-title">
-    <h2>ثبت نمرات دانش‌آموز</h2>
+    <h2><?= ($mode ?? 'admin') === 'teacher' ? 'ثبت نمرات صنوف اختصاص‌داده‌شده' : 'ثبت نمرات دانش‌آموز' ?></h2>
 </div>
 
 <div class="news-thumb">
     <div class="news-info">
+        <?php if (($mode ?? 'admin') === 'teacher'): ?>
+            <div class="form-group full">
+                <label>صنوف اختصاص‌داده‌شده به شما</label>
+                <?php if (($assignment['classes'] ?? []) === []): ?>
+                    <p class="field-help">هیچ صنفی برای شما تخصیص نشده است.</p>
+                <?php else: ?>
+                    <div class="inline-checks">
+                        <?php foreach (($assignment['classes'] ?? []) as $class): ?>
+                            <label><?= e((string) $class['name']) ?></label>
+                        <?php endforeach; ?>
+                    </div>
+                <?php endif; ?>
+            </div>
+
+            <div class="form-group full">
+                <label>مضامین اختصاص‌داده‌شده به شما</label>
+                <?php if (($assignment['subjects'] ?? []) === []): ?>
+                    <p class="field-help">هیچ مضمونی برای شما تخصیص نشده است.</p>
+                <?php else: ?>
+                    <div class="inline-checks">
+                        <?php foreach (($assignment['subjects'] ?? []) as $subject): ?>
+                            <label><?= e((string) $subject['name']) ?></label>
+                        <?php endforeach; ?>
+                    </div>
+                <?php endif; ?>
+            </div>
+        <?php endif; ?>
+
         <form method="get" class="form-inline">
             <label>انتخاب دانش‌آموز:</label>
             <select class="form-control" name="student_id" onchange="this.form.submit()">
+                <?php if ($students === []): ?>
+                    <option value="">شاگردی یافت نشد</option>
+                <?php endif; ?>
                 <?php foreach ($students as $item): ?>
                     <option value="<?= e((string) $item['id']) ?>" <?= (int) ($selectedStudent['id'] ?? 0) === (int) $item['id'] ? 'selected' : '' ?>>
                         <?= e($item['name']) ?>
@@ -35,10 +66,17 @@
                             </td>
                         </tr>
                     <?php endforeach; ?>
+                    <?php if ($subjects === []): ?>
+                        <tr>
+                            <td colspan="2" class="text-center">برای این شاگرد، مضمون قابل ثبت برای شما موجود نیست.</td>
+                        </tr>
+                    <?php endif; ?>
                     </tbody>
                 </table>
 
-                <button class="section-btn btn btn-default" type="submit">ذخیره نمرات</button>
+                <?php if ($subjects !== []): ?>
+                    <button class="section-btn btn btn-default" type="submit">ذخیره نمرات</button>
+                <?php endif; ?>
             </form>
         <?php endif; ?>
     </div>

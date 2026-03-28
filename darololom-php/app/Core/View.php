@@ -21,6 +21,12 @@ final class View
         require $viewFile;
         $content = ob_get_clean();
 
+        $useLayout = (bool) ($data['use_layout'] ?? true);
+        if (!$useLayout) {
+            echo $content;
+            return;
+        }
+
         require dirname(__DIR__) . '/Views/layouts/app.php';
     }
 }
